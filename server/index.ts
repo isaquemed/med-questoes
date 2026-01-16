@@ -1,12 +1,30 @@
 import "dotenv/config"; 
 import express from "express";
 import cors from "cors";
+import helmet from 'helmet';
+import mongoose from 'mongoose';
+import { fileURLToPath } from 'url';
 
 import filtersRoutes from "./routes/filters";
 import questionsRoutes from "./routes/questions";
 import resolutionsRoutes from "./routes/resolutions";
 
 const app = express();
+
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"], // Permite carregar recursos da mesma origem
+        scriptSrc: ["'self'"], // Permite scripts da mesma origem
+        styleSrc: ["'self'", "https://fonts.googleapis.com", "'unsafe-inline'"], // Permite estilos da mesma origem, Google Fonts e estilos inline
+        fontSrc: ["'self'", "https://fonts.gstatic.com", "data:", "https://use.typekit.net"], // << A LINHA MAIS IMPORTANTE PARA O SEU ERRO
+        imgSrc: ["'self'", "data:"], // Permite imagens da mesma origem e data URIs
+        connectSrc: ["'self'"], // Permite conexões (API calls ) para a mesma origem
+      },
+    },
+  })
+);
 
 app.use(cors());
 app.use(express.json());
