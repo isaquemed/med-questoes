@@ -4,12 +4,24 @@ import cors from "cors";
 import helmet from 'helmet';
 import mongoose from 'mongoose';
 import { fileURLToPath } from 'url';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 import filtersRoutes from "./routes/filters";
 import questionsRoutes from "./routes/questions";
 import resolutionsRoutes from "./routes/resolutions";
 
 const app = express();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const clientBuildPath = path.join(__dirname, '..', 'dist'); 
+app.use(express.static(clientBuildPath));
+
+app.get('*', (req, res) => {
+  res.sendFile(path.join(clientBuildPath, 'index.html'));
+});
 
 app.use(
   helmet({
