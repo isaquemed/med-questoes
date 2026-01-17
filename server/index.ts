@@ -6,9 +6,9 @@ import mongoose from 'mongoose';
 import { fileURLToPath } from 'url';
 import path from 'path';
 
-import filtersRoutes from "./routes/filters";
-import questionsRoutes from "./routes/questions";
-import resolutionsRoutes from "./routes/resolutions";
+import filtersRoutes from "./routes/filters.ts";
+import questionsRoutes from "./routes/questions.ts";
+import resolutionsRoutes from "./routes/resolutions.ts";
 
 const app = express();
 
