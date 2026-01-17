@@ -277,6 +277,8 @@ importers:
         version: 2.1.9(@types/node@24.7.0)(lightningcss@1.30.2)
 
 packages:
+  - '.'
+  - 'server'
 
   '@alloc/quick-lru@5.2.0':
     resolution: {integrity: sha512-UrcABB+4bUrFABwbluTIBErXwvbsU/V7TZWfmbgJfbkwiBuziS9gxdODUyuiecfdGQ85jglMW6juS3+z5TsKLw==}
