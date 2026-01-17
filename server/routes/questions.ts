@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { db } from "../db";
+import { db } from "../db/index.ts";
 import { questions, alternatives } from "../db/schema";
 import { and, eq } from "drizzle-orm";
 

@@ -2,7 +2,7 @@
 
 import { Router } from "express";
 import { aiResolutionService } from "../services/aiResolutionService";
-import { db } from "../db";
+import { db } from "../db/index.ts";
 import { resolutions } from "../db/schema";
 import { eq } from "drizzle-orm"; // 1. Importação necessária
 
