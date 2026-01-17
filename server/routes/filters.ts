@@ -1,71 +1,31 @@
-// server/routes/filters.ts
 import { Router } from "express";
-import  db  from "../db/index.js";
-import { questions } from "../db/schema.js";
-import { eq, and } from "drizzle-orm";
+import db from "../db/index.js";
 
 const router = Router();
 
-router.get("/", async (req, res) => {
+router.get('/filters', async (req, res) => {
   try {
-    const { specialty, source, year } = req.query;
+    // Consulta para bancas distintas
+    const [bancas]: [any[], any] = await db.query("SELECT DISTINCT banca FROM questions WHERE banca IS NOT NULL AND banca != '' ORDER BY banca ASC");
+    
+    // Consulta para anos distintos
+    const [anos]: [any[], any] = await db.query("SELECT DISTINCT year FROM questions WHERE year IS NOT NULL ORDER BY year DESC");
+    
+    // Consulta para matérias distintas
+    const [materias]: [any[], any] = await db.query("SELECT DISTINCT subject FROM questions WHERE subject IS NOT NULL AND subject != '' ORDER BY subject ASC");
+    
+    // Consulta para instituições distintas
+    const [instituicoes]: [any[], any] = await db.query("SELECT DISTINCT institution FROM questions WHERE institution IS NOT NULL AND institution != '' ORDER BY institution ASC");
 
-    let query = db
-      .selectDistinct({
-        topic: questions.topic,
-        specialty: questions.specialty,
-        year: questions.year,
-        source: questions.source
-      })
-      .from(questions);
-
-    const conditions = [];
-    if (specialty && specialty !== "all") {
-      conditions.push(eq(questions.specialty, specialty as string));
-    }
-    if (source && source !== "all") {
-      conditions.push(eq(questions.source, source as string));
-    }
-    if (year && year !== "all") {
-      conditions.push(eq(questions.year, parseInt(year as string)));
-    }
-
-    if (conditions.length > 0) {
-      // @ts-ignore
-      query = query.where(and(...conditions));
-    }
-
-    const results = await query;
-
-    // Se filtrou por especialidade, retornamos os tópicos filtrados, 
-    // mas mantemos as outras opções globais para não "travar" o usuário.
-    if (specialty && specialty !== "all") {
-        const allOptions = await db
-            .selectDistinct({
-                specialty: questions.specialty,
-                year: questions.year,
-                source: questions.source
-            })
-            .from(questions);
-
-        return res.json({
-            topics: [...new Set(results.map(r => r.topic).filter(Boolean))],
-            specialties: [...new Set(allOptions.map(r => r.specialty).filter(Boolean))],
-            years: [...new Set(allOptions.map(r => r.year).filter(Boolean))],
-            sources: [...new Set(allOptions.map(r => r.source).filter(Boolean))]
-        });
-    }
-
-    return res.json({
-      topics: [...new Set(results.map(r => r.topic).filter(Boolean))],
-      specialties: [...new Set(results.map(r => r.specialty).filter(Boolean))],
-      years: [...new Set(results.map(r => r.year).filter(Boolean))],
-      sources: [...new Set(results.map(r => r.source).filter(Boolean))]
+    res.json({
+      bancas: bancas.map((r: any) => r.banca),
+      anos: anos.map((r: any) => r.year),
+      materias: materias.map((r: any) => r.subject),
+      instituicoes: instituicoes.map((r: any) => r.institution),
     });
-
-  } catch (err) {
-    console.error("Erro ao buscar filtros:", err);
-    res.status(500).json({ error: "Falha ao carregar filtros" });
+  } catch (error) {
+    console.error('Error fetching filters:', error);
+    res.status(500).json({ message: 'Error fetching filters' });
   }
 });
 
