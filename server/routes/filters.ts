@@ -1,6 +1,6 @@
 // server/routes/filters.ts
 import { Router } from "express";
-import  db  from "../db/index.js";
+import  db  from "../db/index.ts";
 import { questions } from "../db/schema.ts";
 import { eq, and } from "drizzle-orm";
 
