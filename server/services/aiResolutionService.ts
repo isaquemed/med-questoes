@@ -1,20 +1,31 @@
-// server/services/aiResolutionService.ts
+import OpenAI from 'openai';
+import { OPENAI_API_KEY } from '../config/env.js'; // Corrigido para .js
 
-import { difyService } from "./difyService.js";
+const openai = new OpenAI({
+  apiKey: OPENAI_API_KEY,
+});
 
-export const aiResolutionService = {
-  async generateResolution(questionText: string): Promise<string> {
-    const prompt = `
-Você é um médico especialista.
-Explique detalhadamente a resolução da seguinte questão de residência:
+export async function getResolutionFromAI(questionText: string): Promise<string | null> {
+  try {
+    const completion = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      messages: [
+        {
+          role: "system",
+          content: "Você é um assistente especialista em resolver questões de concurso. Forneça uma resolução clara e direta para a questão apresentada."
+        },
+        {
+          role: "user",
+          content: questionText
+        }
+      ],
+      temperature: 0.7,
+      max_tokens: 500,
+    });
 
-"${questionText}"
-
-Explique o raciocínio clínico, diagnóstico diferencial e o porquê da resposta correta.Dê uma dica ao final
-    `;
-
-    const result = await difyService.generate(prompt);
-
-    return result;
+    return completion.choices[0]?.message?.content ?? null;
+  } catch (error) {
+    console.error("Error fetching resolution from OpenAI:", error);
+    return null;
   }
-};
+}

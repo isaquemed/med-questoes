@@ -1,42 +1,36 @@
-import { questions as questionsTable, alternatives as alternativesTable } from "./schema.js";
-import { questions as initialQuestions } from "../../client/src/data/questions.js";
-import { drizzle } from "drizzle-orm/mysql2";
-import mysql from "mysql2/promise";
+import db from './index.js';
+// O caminho correto agora é a partir da raiz, dentro de 'src'
+import questionsData from '../../src/data/questions.json' assert { type: 'json' };
 
 async function seed() {
-  const connection = await mysql.createConnection({
-    host: process.env.DATABASE_HOST || "localhost",
-    user: process.env.DATABASE_USER || "root",
-    password: process.env.DATABASE_PASSWORD || "M3dqu3st03s!",
-    database: process.env.DATABASE_NAME || "med_questoes",
-  });
+  try {
+    console.log('Starting to seed the database...');
 
-  const db = drizzle(connection);
+    for (const q of questionsData) {
+      // Insere a questão principal
+      const questionSql = `
+        INSERT INTO questions (id, title, description, year, banca, institution, subject) 
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+      `;
+      await db.query(questionSql, [q.id, q.title, q.description, q.year, q.banca, q.institution, q.subject]);
 
-  console.log("Seeding database...");
-
-  for (const q of initialQuestions) {
-    const [result] = await db.insert(questionsTable).values({
-      question: q.question,
-      correctAnswer: q.correctAnswer,
-      source: q.source,
-      year: q.year,
-      specialty: q.specialty,
-    });
-
-    const questionId = (result as any).insertId;
-
-    for (const alt of q.alternatives) {
-      await db.insert(alternativesTable).values({
-        questionId,
-        letter: alt.letter,
-        text: alt.text,
-      });
+      // Insere as alternativas associadas
+      for (const alt of q.alternatives) {
+        const alternativeSql = `
+          INSERT INTO alternatives (id, question_id, description, is_correct) 
+          VALUES (?, ?, ?, ?)
+        `;
+        await db.query(alternativeSql, [alt.id, q.id, alt.description, alt.is_correct]);
+      }
     }
-  }
 
-  console.log("Seeding completed!");
-  await connection.end();
+    console.log('Database seeded successfully!');
+  } catch (error) {
+    console.error('Error seeding the database:', error);
+  } finally {
+    // Encerra o pool de conexões para que o script termine
+    await db.end();
+  }
 }
 
-seed().catch(console.error);
+seed();
