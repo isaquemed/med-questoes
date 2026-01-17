@@ -1,7 +1,7 @@
 // server/routes/filters.ts
 import { Router } from "express";
 import { db } from "../db/index.ts";
-import { questions } from "../db/schema";
+import { questions } from "../db/schema.ts";
 import { eq, and } from "drizzle-orm";
 
 const router = Router();

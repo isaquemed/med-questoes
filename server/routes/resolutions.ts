@@ -1,9 +1,9 @@
 // server/routes/resolutions.ts
 
 import { Router } from "express";
-import { aiResolutionService } from "../services/aiResolutionService";
+import { aiResolutionService } from "../services/aiResolutionService.ts";
 import { db } from "../db/index.ts";
-import { resolutions } from "../db/schema";
+import { resolutions } from "../db/schema.ts";
 import { eq } from "drizzle-orm"; // 1. Importação necessária
 
 const router = Router();
