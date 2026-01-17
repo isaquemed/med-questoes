@@ -1,6 +1,6 @@
 // server/services/aiResolutionService.ts
 
-import { difyService } from "./difyService.ts";
+import { difyService } from "./difyService.js";
 
 export const aiResolutionService = {
   async generateResolution(questionText: string): Promise<string> {
