@@ -13,7 +13,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // O diretório 'dist' será criado na raiz do projeto pelo build do Vite
-const clientBuildPath = path.join(__dirname, '..', 'dist'); 
+const clientBuildPath = path.join(__dirname, '..', '..', 'dist'); 
 
 app.use(express.static(clientBuildPath));
 
@@ -41,7 +41,7 @@ app.use("/api/questions", questionsRoutes);
 app.use("/api/resolutions", resolutionsRoutes);
 
 // Servir o app do cliente para todas as outras rotas
-app.get("/*", (req, res) => {
+app.get("*", (req, res) => {
   res.sendFile(path.join(clientBuildPath, 'index.html'));
 });
 
