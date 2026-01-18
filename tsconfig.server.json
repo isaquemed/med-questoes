@@ -4,6 +4,7 @@
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "outDir": "server/dist", // Coloca o JS compilado em 'server/dist'
+    "rootDir": "server",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "strict": true,
