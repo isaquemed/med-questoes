@@ -4,7 +4,7 @@ import path from "path";
 
 export default defineConfig({
   plugins: [react()],
-  root: path.resolve(__dirname, "client"), // Isso avisa ao Vite que o site está na pasta client
+  root: path.resolve(__dirname, "client"),
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "client/src"),
@@ -20,7 +20,7 @@ export default defineConfig({
     },
   },
   build: {
-    outDir: path.resolve(__dirname, "dist/public" ),
+    outDir: path.resolve(__dirname, "dist" ), // Alterado para 'dist'
     emptyOutDir: true,
   },
 });

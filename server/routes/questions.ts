@@ -3,31 +3,52 @@ import db from "../db/index.js";
 
 const router = Router();
 
-router.get('/question', async (req, res) => {
+router.get('/', async (req, res) => {
   try {
-    // Busca uma questão aleatória
-    const [questions]: [any[], any] = await db.query("SELECT * FROM questions ORDER BY RAND() LIMIT 1");
+    const { source, year, specialty, topic } = req.query;
 
-    if (questions.length === 0) {
-      return res.status(404).json({ message: 'No questions found' });
+    let query = "SELECT * FROM questions WHERE 1=1";
+    const params: (string | number)[] = [];
+
+    if (source && source !== 'all') {
+      query += " AND source = ?";
+      params.push(source as string);
+    }
+    if (year && year !== 'all') {
+      query += " AND year = ?";
+      params.push(parseInt(year as string, 10));
+    }
+    if (specialty && specialty !== 'all') {
+      query += " AND specialty = ?";
+      params.push(specialty as string);
+    }
+    if (topic && topic !== 'all') {
+      query += " AND topic = ?";
+      params.push(topic as string);
     }
 
-    const question = questions[0];
+    const [questions]: [any[], any] = await db.query(query, params);
 
-    // Busca as alternativas para a questão encontrada
-    const [alternatives]: [any[], any] = await db.query("SELECT * FROM alternatives WHERE question_id = ?", [question.id]);
+    if (questions.length === 0) {
+      return res.json([]); // Retorna um array vazio se não encontrar questões
+    }
 
-    // Adiciona as alternativas ao objeto da questão
-    const questionWithAlternatives = {
-      ...question,
-      alternatives: alternatives
-    };
+    // Para cada questão, buscar suas alternativas
+    const questionsWithAlternatives = await Promise.all(questions.map(async (question) => {
+      const [alternatives]: [any[], any] = await db.query("SELECT * FROM alternatives WHERE question_id = ?", [question.id]);
+      return {
+        ...question,
+        alternatives: alternatives
+      };
+    }));
 
-    res.json(questionWithAlternatives);
+    res.json(questionsWithAlternatives);
+
   } catch (error) {
-    console.error('Error fetching question:', error);
-    res.status(500).json({ message: 'Error fetching question' });
+    console.error('Error fetching questions:', error);
+    res.status(500).json({ message: 'Error fetching questions' });
   }
 });
 
 export default router;
+

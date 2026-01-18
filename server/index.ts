@@ -2,50 +2,50 @@ import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import helmet from 'helmet';
-import mongoose from 'mongoose';
 import { fileURLToPath } from 'url';
 import path from 'path';
-
 import filtersRoutes from "./routes/filters.js";
 import questionsRoutes from "./routes/questions.js";
 import resolutionsRoutes from "./routes/resolutions.js";
 
 const app = express();
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// O diretório 'dist' será criado na raiz do projeto pelo build do Vite
 const clientBuildPath = path.join(__dirname, '..', 'dist'); 
-app.use(express.static(clientBuildPath));
 
-app.get('*', (req, res) => {
-  res.sendFile(path.join(clientBuildPath, 'index.js'));
-});
+app.use(express.static(clientBuildPath));
 
 app.use(
   helmet({
     contentSecurityPolicy: {
       directives: {
-        defaultSrc: ["'self'"], // Permite carregar recursos da mesma origem
-        scriptSrc: ["'self'"], // Permite scripts da mesma origem
-        styleSrc: ["'self'", "https://fonts.googleapis.com", "'unsafe-inline'"], // Permite estilos da mesma origem, Google Fonts e estilos inline
-        fontSrc: ["'self'", "https://fonts.gstatic.com", "data:", "https://use.typekit.net"], // << A LINHA MAIS IMPORTANTE PARA O SEU ERRO
-        imgSrc: ["'self'", "data:"], // Permite imagens da mesma origem e data URIs
-        connectSrc: ["'self'"], // Permite conexões (API calls ) para a mesma origem
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'"],
+        styleSrc: ["'self'", "https://fonts.googleapis.com", "'unsafe-inline'"],
+        fontSrc: ["'self'", "https://fonts.gstatic.com", "data:", "https://use.typekit.net"],
+        imgSrc: ["'self'", "data:", "blob:"], // Adicionado 'blob:' para imagens
+        connectSrc: ["'self'"], 
       },
     },
-  })
+  } )
 );
 
 app.use(cors());
 app.use(express.json());
 
-// Rotas
+// Rotas da API
 app.use("/api/filters", filtersRoutes);
 app.use("/api/questions", questionsRoutes);
 app.use("/api/resolutions", resolutionsRoutes);
 
-const PORT = 3001;
+// Servir o app do cliente para todas as outras rotas
+app.get("/*", (req, res) => {
+  res.sendFile(path.join(clientBuildPath, 'index.html'));
+});
+
+const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`Backend rodando na porta ${PORT}`);
 });
