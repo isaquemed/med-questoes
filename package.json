@@ -4,17 +4,18 @@
   "type": "module",
   "license": "MIT",
   "scripts": {
-    "dev": "vite",
-    "build": "pnpm run build:server && pnpm run build:client",
-    "build:client": "vite build",
-    "build:server": "tsc --project tsconfig.server.json",
-    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-    "preview": "vite preview",
-    "check": "tsc --noEmit",
-    "format": "prettier --write .",
-    "migrate": "mysql -u host -p med_questoes < server/db/migration_add_fields.sql",
-    "generate-resolutions": "tsx server/scripts/generateBatchResolutions.ts"
-  },
+  	"dev": "vite",
+  	"build": "pnpm run build:server && pnpm run build:client",
+  	"build:server": "tsc --project tsconfig.server.json",
+ 	 "build:client": "vite build",
+ 	 "start": "bash start.sh", // NOVO: Comando de start para o Render
+ 	 "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+	  "preview": "vite preview",
+ 	 "check": "tsc --noEmit",
+ 	 "prettier": "prettier --write .",
+ 	 "migrate": "mysql -u host -p med_questoes < server/db/migration_add_fields.sql",
+ 	 "generate-resolutions": "tsx server/scripts/generateBatchResolutions.ts"
+	},
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
     "@prisma/client": "^7.2.0",

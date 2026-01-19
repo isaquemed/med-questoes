@@ -1,3 +1,4 @@
+import fs from 'fs';
 import mysql from 'mysql2/promise';
 
 export default mysql.createPool({
@@ -7,7 +8,7 @@ export default mysql.createPool({
   database: process.env.DB_DATABASE,
   port: Number(process.env.DB_PORT) || 4000,
   ssl: {
-    ca: process.env.DB_SSL_CA,
+    ca: process.env.DB_SSL_CA_PATH ? fs.readFileSync(process.env.DB_SSL_CA_PATH) : undefined,
   },
   waitForConnections: true,
   connectionLimit: 10,
