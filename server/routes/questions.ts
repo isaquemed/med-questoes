@@ -15,7 +15,7 @@ router.get('/', async (req, res) => {
 
     // Mapeamento flexível para suportar diferentes nomes de colunas
     if (source && source !== 'all') {
-      whereClause += " AND (source = ? OR banca = ?)";
+      whereClause += " AND (source = ?)";
       params.push(source as string, source as string);
     }
     if (year && year !== 'all') {
@@ -24,11 +24,11 @@ router.get('/', async (req, res) => {
     }
     if (specialty && specialty !== 'all') {
       whereClause += " AND (specialty = ?)";
-      params.push(specialty as string, specialty as string);
+      params.push(specialty as string);
     }
     if (topic && topic !== 'all') {
-      whereClause += " AND (topic = ? OR institution = ?)";
-      params.push(topic as string, topic as string);
+      whereClause += " AND (topic = ?)";
+      params.push(topic as string);
     }
 
     // 2. Buscar o total de questões para paginação
