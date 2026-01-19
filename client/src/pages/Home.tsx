@@ -161,7 +161,7 @@ export default function Home() {
   await fetchQuestions(newFilters);
 };
 
-  const handleStartQuiz = () => {
+  const handleStartQuiz = async () => {
     if (loading) return;
     
     setLoading(true);
