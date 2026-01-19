@@ -8,38 +8,38 @@ router.get('/', async (req, res) => {
     const { specialty } = req.query;
 
     // Consulta para bancas (sources)
-    const [bancas]: [any[], any] = await db.query(
-      "SELECT DISTINCT banca FROM questions WHERE banca IS NOT NULL AND banca != '' ORDER BY banca ASC"
+    const [sources]: [any[], any] = await db.query(
+      "SELECT DISTINCT source FROM questions WHERE source IS NOT NULL AND source != '' ORDER BY source ASC"
     );
     
     // Consulta para anos (years)
-    const [anos]: [any[], any] = await db.query(
+    const [years]: [any[], any] = await db.query(
       "SELECT DISTINCT year FROM questions WHERE year IS NOT NULL ORDER BY year DESC"
     );
     
     // Consulta para matérias (specialties)
-    const [materias]: [any[], any] = await db.query(
-      "SELECT DISTINCT subject FROM questions WHERE subject IS NOT NULL AND subject != '' ORDER BY subject ASC"
+    const [specialties]: [any[], any] = await db.query(
+      "SELECT DISTINCT specialty FROM questions WHERE specialty IS NOT NULL AND specialty != '' ORDER BY specialty ASC"
     );
     
-    // Consulta para instituições (topics) - Com filtro de especialidade
-    let topicsQuery = "SELECT DISTINCT institution FROM questions WHERE institution IS NOT NULL AND institution != ''";
+    // Consulta para tópicos (topics)
+    let topicsQuery = "SELECT DISTINCT topic FROM questions WHERE topic IS NOT NULL AND topic != ''";
     const topicsParams = [];
     
     if (specialty && specialty !== 'all') {
-      topicsQuery += " AND subject = ?";
+      topicsQuery += " AND specialty = ?";
       topicsParams.push(specialty);
     }
     
-    topicsQuery += " ORDER BY institution ASC";
-    const [instituicoes]: [any[], any] = await db.query(topicsQuery, topicsParams);
+    topicsQuery += " ORDER BY topic ASC";
+    const [topics]: [any[], any] = await db.query(topicsQuery, topicsParams);
 
-    // Retornando no formato que o frontend espera (sources, years, specialties, topics)
+    // Retornando no formato que o frontend espera
     res.json({
-      sources: bancas.map((r: any) => r.banca),
-      years: anos.map((r: any) => r.year),
-      specialties: materias.map((r: any) => r.subject),
-      topics: instituicoes.map((r: any) => r.institution),
+      sources: sources.map((r: any) => r.source),
+      years: years.map((r: any) => r.year),
+      specialties: specialties.map((r: any) => r.specialty),
+      topics: topics.map((r: any) => r.topic),
     });
   } catch (error) {
     console.error('Error fetching filters:', error);

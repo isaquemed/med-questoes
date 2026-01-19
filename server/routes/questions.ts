@@ -11,9 +11,9 @@ router.get('/', async (req, res) => {
     let whereClause = "WHERE 1=1";
     const params: (string | number)[] = [];
 
-    // Mapeamento de filtros para colunas do banco (conforme identificado na análise)
+    // Mapeamento de filtros para colunas do banco (conforme schema.ts)
     if (source && source !== 'all') {
-      whereClause += " AND banca = ?";
+      whereClause += " AND source = ?";
       params.push(source as string);
     }
     if (year && year !== 'all') {
@@ -21,17 +21,16 @@ router.get('/', async (req, res) => {
       params.push(parseInt(year as string, 10));
     }
     if (specialty && specialty !== 'all') {
-      whereClause += " AND subject = ?";
+      whereClause += " AND specialty = ?";
       params.push(specialty as string);
     }
     if (topic && topic !== 'all') {
-      whereClause += " AND institution = ?"; // Topic parece estar mapeado para institution no banco atual
+      whereClause += " AND topic = ?";
       params.push(topic as string);
     }
 
     // 2. Buscar o total de questões para paginação
     const [countResult]: [any[], any] = await db.query(
-      // Usamos os mesmos parâmetros para garantir que a contagem reflita os filtros
       `SELECT COUNT(*) as total FROM questions ${whereClause}`,
       params
     );
@@ -74,13 +73,10 @@ router.get('/', async (req, res) => {
       return acc;
     }, {});
 
-    // 6. Montar o objeto final e mapear colunas para o frontend
+    // 6. Montar o objeto final
     const questionsWithAlternatives = questions.map(question => ({
       ...question,
-      // Mapeamento de colunas do banco (banca, subject, institution) para o frontend (source, specialty, topic)
-      source: question.banca,
-      specialty: question.subject,
-      topic: question.institution,
+      // As colunas já estão com os nomes corretos conforme o schema
       alternatives: alternativesMap[question.id] || []
     }));
 

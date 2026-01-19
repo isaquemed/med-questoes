@@ -95,6 +95,7 @@ export default function Home() {
 
     const response = await questionsApi.getQuestions(params);
     
+    // O backend agora retorna { questions: [], pagination: {} }
     const data = response.data.questions || [];
     const total = response.data.pagination?.total || data.length;
     
