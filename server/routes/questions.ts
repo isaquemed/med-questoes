@@ -5,44 +5,93 @@ const router = Router();
 
 router.get('/', async (req, res) => {
   try {
-    const { source, year, specialty, topic } = req.query;
+    const { source, year, specialty, topic, limit = 10, offset = 0 } = req.query;
 
-    let query = "SELECT * FROM questions WHERE 1=1";
+    // 1. Construir a query base para as questões
+    let whereClause = "WHERE 1=1";
     const params: (string | number)[] = [];
 
+    // Mapeamento de filtros para colunas do banco (conforme identificado na análise)
     if (source && source !== 'all') {
-      query += " AND source = ?";
+      whereClause += " AND banca = ?";
       params.push(source as string);
     }
     if (year && year !== 'all') {
-      query += " AND year = ?";
+      whereClause += " AND year = ?";
       params.push(parseInt(year as string, 10));
     }
     if (specialty && specialty !== 'all') {
-      query += " AND specialty = ?";
+      whereClause += " AND subject = ?";
       params.push(specialty as string);
     }
     if (topic && topic !== 'all') {
-      query += " AND topic = ?";
+      whereClause += " AND institution = ?"; // Topic parece estar mapeado para institution no banco atual
       params.push(topic as string);
     }
 
-    const [questions]: [any[], any] = await db.query(query, params);
+    // 2. Buscar o total de questões para paginação
+    const [countResult]: [any[], any] = await db.query(
+      // Usamos os mesmos parâmetros para garantir que a contagem reflita os filtros
+      `SELECT COUNT(*) as total FROM questions ${whereClause}`,
+      params
+    );
+    const total = countResult[0].total;
+
+    // 3. Buscar as questões com paginação
+    const questionsQuery = `
+      SELECT * FROM questions 
+      ${whereClause} 
+      ORDER BY id DESC 
+      LIMIT ? OFFSET ?
+    `;
+    
+    const [questions]: [any[], any] = await db.query(questionsQuery, [
+      ...params, 
+      Number(limit), 
+      Number(offset)
+    ]);
 
     if (questions.length === 0) {
-      return res.json([]); // Retorna um array vazio se não encontrar questões
+      return res.json({
+        questions: [],
+        pagination: { total, limit: Number(limit), offset: Number(offset) }
+      });
     }
 
-    // Para cada questão, buscar suas alternativas
-    const questionsWithAlternatives = await Promise.all(questions.map(async (question) => {
-      const [alternatives]: [any[], any] = await db.query("SELECT * FROM alternatives WHERE question_id = ?", [question.id]);
-      return {
-        ...question,
-        alternatives: alternatives
-      };
+    // 4. Buscar todas as alternativas para as questões selecionadas em uma única query
+    const questionIds = questions.map(q => q.id);
+    const [allAlternatives]: [any[], any] = await db.query(
+      "SELECT * FROM alternatives WHERE question_id IN (?) ORDER BY question_id, letter",
+      [questionIds]
+    );
+
+    // 5. Agrupar alternativas por questão
+    const alternativesMap = allAlternatives.reduce((acc: any, alt: any) => {
+      if (!acc[alt.question_id]) {
+        acc[alt.question_id] = [];
+      }
+      acc[alt.question_id].push(alt);
+      return acc;
+    }, {});
+
+    // 6. Montar o objeto final e mapear colunas para o frontend
+    const questionsWithAlternatives = questions.map(question => ({
+      ...question,
+      // Mapeamento de colunas do banco (banca, subject, institution) para o frontend (source, specialty, topic)
+      source: question.banca,
+      specialty: question.subject,
+      topic: question.institution,
+      alternatives: alternativesMap[question.id] || []
     }));
 
-    res.json(questionsWithAlternatives);
+    res.json({
+      questions: questionsWithAlternatives,
+      pagination: {
+        total,
+        limit: Number(limit),
+        offset: Number(offset)
+      }
+    });
 
   } catch (error) {
     console.error('Error fetching questions:', error);
@@ -51,4 +100,3 @@ router.get('/', async (req, res) => {
 });
 
 export default router;
-

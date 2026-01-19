@@ -95,10 +95,11 @@ export default function Home() {
 
     const response = await questionsApi.getQuestions(params);
     
-    const data = Array.isArray(response.data) ? response.data : [];
+    const data = response.data.questions || [];
+    const total = response.data.pagination?.total || data.length;
     
     setQuestions(data);
-    setTotalQuestionsCount(data.length);
+    setTotalQuestionsCount(total);
   } catch (error) {
     console.error("Error fetching questions:", error);
     setQuestions([]);

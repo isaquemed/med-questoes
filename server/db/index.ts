@@ -11,6 +11,8 @@ export default mysql.createPool({
     ca: process.env.DB_SSL_CA_PATH ? fs.readFileSync(process.env.DB_SSL_CA_PATH) : undefined,
   },
   waitForConnections: true,
-  connectionLimit: 10,
+  connectionLimit: 20,
   queueLimit: 0
+  enableKeepAlive: true,
+  keepAliveInitialDelay: 10000
 });
