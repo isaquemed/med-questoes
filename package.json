@@ -5,16 +5,16 @@
   "license": "MIT",
   "scripts": {
   	"dev": "vite",
-  	"build": "pnpm run build:server && pnpm run build:client",
-  	"build:server": "tsc --project tsconfig.server.json",
- 	 "build:client": "vite build",
- 	 "start": "bash start.sh", // NOVO: Comando de start para o Render
+ 	 "build": "pnpm run build:server && pnpm run build:client",
+ 	 "build:server": "tsc --project tsconfig.server.json",
+	  "build:client": "vite build",
+	  "start": "bash start.sh",
  	 "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-	  "preview": "vite preview",
+ 	 "preview": "vite preview",
  	 "check": "tsc --noEmit",
  	 "prettier": "prettier --write .",
- 	 "migrate": "mysql -u host -p med_questoes < server/db/migration_add_fields.sql",
- 	 "generate-resolutions": "tsx server/scripts/generateBatchResolutions.ts"
+	  "migrate": "mysql -u host -p med_questoes < server/db/migration_add_fields.sql",
+	  "generate-resolutions": "tsx server/scripts/generateBatchResolutions.ts"
 	},
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
