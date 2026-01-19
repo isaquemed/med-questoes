@@ -7,11 +7,11 @@ export default mysql.createPool({
   password: process.env.DB_PASSWORD,
   database: process.env.DB_DATABASE,
   port: Number(process.env.DB_PORT) || 4000,
-  ssl: {
-    ca: process.env.DB_SSL_CA_PATH ? fs.readFileSync(process.env.DB_SSL_CA_PATH) : undefined,
-  },
+  ssl: process.env.DB_SSL_CA_PATH && fs.existsSync(process.env.DB_SSL_CA_PATH) 
+    ? { ca: fs.readFileSync(process.env.DB_SSL_CA_PATH) } 
+    : (process.env.DB_SSL_CA ? { ca: process.env.DB_SSL_CA } : undefined),
   waitForConnections: true,
-  connectionLimit: 20,
+  connectionLimit: 20, // Aumentado para lidar com mais requisições simultâneas
   queueLimit: 0,
   enableKeepAlive: true,
   keepAliveInitialDelay: 10000

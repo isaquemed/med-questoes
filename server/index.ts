@@ -12,8 +12,9 @@ const app = express();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// O diretório 'dist' será criado na raiz do projeto pelo build do Vite
-const clientBuildPath = path.join(__dirname, '..', '..', 'dist'); 
+// O diretório 'dist' está na raiz do projeto, e este arquivo está em server/dist/index.js
+// __dirname é /home/ubuntu/project/server/dist
+const clientBuildPath = path.resolve(__dirname, '../../dist');
 
 app.use(express.static(clientBuildPath));
 

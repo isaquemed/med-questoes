@@ -76,7 +76,8 @@ router.get('/', async (req, res) => {
     // 6. Montar o objeto final
     const questionsWithAlternatives = questions.map(question => ({
       ...question,
-      // As colunas já estão com os nomes corretos conforme o schema
+      // Garantir compatibilidade com diferentes nomes de colunas no banco
+      correctAnswer: question.correctAnswer || question.correct_answer,
       alternatives: alternativesMap[question.id] || []
     }));
 
