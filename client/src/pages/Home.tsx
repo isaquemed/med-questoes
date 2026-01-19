@@ -116,13 +116,11 @@ export default function Home() {
     if (key === "specialty") {
       newFilters.topic = "all";
       try {
-        const response = await questionsApi.getFilters({ specialty: value });
-        if (response.data) {
-          setAvailableFilters(prev => ({
-            ...prev,
-            topics: response.data.topics || []
-          }));
-        }
+        const response = await fetch(`/api/filters/filtered-topics?specialty=	${encodeURIComponent(value)}`);
+        setAvailableFilters(prev => ({
+        	...prev,
+       		 topics: data.topics || []
+      	}));
       } catch (err) {
         console.error("Erro ao buscar sub-filtros:", err);
       }
