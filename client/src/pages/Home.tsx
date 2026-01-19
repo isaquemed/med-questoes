@@ -110,21 +110,27 @@ export default function Home() {
 };
 
   const handleFilterChange = async (key: string, value: string) => {
+    console.log(`Alterando filtro ${key} para:`, value);
     const newFilters = { ...filters, [key]: value };
     
     if (key === "specialty") {
       newFilters.topic = "all";
-      const response = await questionsApi.getFilters({ specialty: value });
-      if (response.data) {
-        setAvailableFilters(prev => ({
-          ...prev,
-          topics: response.data.topics || []
-        }));
+      try {
+        const response = await questionsApi.getFilters({ specialty: value });
+        if (response.data) {
+          setAvailableFilters(prev => ({
+            ...prev,
+            topics: response.data.topics || []
+          }));
+        }
+      } catch (err) {
+        console.error("Erro ao buscar sub-filtros:", err);
       }
     }
     
     setFilters(newFilters);
-    fetchQuestions(newFilters);
+    // Forçar a busca de questões com os novos filtros
+    await fetchQuestions(newFilters);
   };
 
   const handleStartQuiz = () => {
@@ -289,8 +295,8 @@ fetchFilters();
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">Todos os anos</SelectItem>
-                      {(availableFilters.years || []).map((y: number) => (
-                        <SelectItem key={y} value={y.toString()}>{y}</SelectItem>
+                      {(availableFilters.years || []).map((y: any) => (
+                        <SelectItem key={y} value={String(y)}>{y}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -319,8 +325,8 @@ fetchFilters();
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">Todos os temas</SelectItem>
-                      {(availableFilters.topics || []).map((t: string) => (
-                        <SelectItem key={t} value={t}>{t}</SelectItem>
+                      {(availableFilters.topics || []).map((t: any) => (
+                        <SelectItem key={t} value={String(t)}>{t}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
