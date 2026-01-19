@@ -4,18 +4,18 @@
   "type": "module",
   "license": "MIT",
   "scripts": {
-  	"dev": "vite",
- 	 "build": "pnpm run build:server && pnpm run build:client",
- 	 "build:server": "tsc --project tsconfig.server.json",
-	  "build:client": "vite build",
-	  "start": "bash start.sh",
- 	 "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
- 	 "preview": "vite preview",
- 	 "check": "tsc --noEmit",
- 	 "prettier": "prettier --write .",
-	  "migrate": "mysql -u host -p med_questoes < server/db/migration_add_fields.sql",
-	  "generate-resolutions": "tsx server/scripts/generateBatchResolutions.ts"
-	},
+    "dev": "vite",
+    "build": "pnpm run build:server && pnpm run build:client",
+    "build:server": "tsc --project tsconfig.server.json",
+    "build:client": "vite build",
+    "start": "bash start.sh",
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "preview": "vite preview",
+    "check": "tsc --noEmit",
+    "prettier": "prettier --write .",
+    "migrate": "mysql -u host -p med_questoes < server/db/migration_add_fields.sql",
+    "generate-resolutions": "tsx server/scripts/generateBatchResolutions.ts"
+  },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
     "@prisma/client": "^7.2.0",
@@ -68,7 +68,6 @@
     "react-hook-form": "^7.64.0",
     "react-markdown": "^9.0.1",
     "react-resizable-panels": "^3.0.6",
-    "react-router-dom": "^7.12.0",
     "recharts": "^2.15.2",
     "remark-gfm": "^4.0.0",
     "sonner": "^2.0.7",
@@ -108,9 +107,6 @@
   },
   "packageManager": "pnpm@10.4.1+sha512.c753b6c3ad7afa13af388fa6d808035a008e30ea9993f58c6663e2bc5ff21679aa834db094987129aa4d488b86df57f7b634981b2f827cdcacc698cc0cfb88af",
   "pnpm": {
-    "patchedDependencies": {
-      "wouter@3.7.1": "patches/wouter@3.7.1.patch"
-    },
     "overrides": {
       "tailwindcss>nanoid": "3.3.7"
     }
