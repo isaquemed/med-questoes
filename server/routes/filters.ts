@@ -1,61 +1,62 @@
-import { Router } from "express";
+import { Router, Request, Response } from "express";
 import db from "../db/index.js";
 
 const router = Router();
 
-router.get('/', async (req, res) => {
+// Função auxiliar para tentar buscar de múltiplas colunas possíveis
+const getDistinct = async (col1: string, col2: string) => {
+  try {
+    const [rows]: [any[], any] = await db.query(
+      `SELECT DISTINCT ${col1} as value FROM questions WHERE ${col1} IS NOT NULL AND ${col1} != '' ORDER BY value ASC`
+    );
+    return rows.map((r) => r.value);
+  } catch (e) {
+    try {
+      const [rows]: [any[], any] = await db.query(
+        `SELECT DISTINCT ${col2} as value FROM questions WHERE ${col2} IS NOT NULL AND ${col2} != '' ORDER BY value ASC`
+      );
+      return rows.map((r) => r.value);
+    } catch (e2) {
+      return [];
+    }
+  }
+};
+
+// Rota principal para buscar filtros disponíveis
+router.get('/', async (req: Request, res: Response) => {
   try {
     const { specialty } = req.query;
 
-    // Função auxiliar para tentar buscar de múltiplas colunas possíveis
-    const getDistinct = async (col1: string, col2: string) => {
-      try {
-        const [rows]: [any[], any] = await db.query(`SELECT DISTINCT ${col1} as value FROM questions WHERE ${col1} IS NOT NULL AND ${col1} != '' ORDER BY value ASC`);
-        return rows.map(r => r.value);
-      } catch (e) {
-        try {
-          const [rows]: [any[], any] = await db.query(`SELECT DISTINCT ${col2} as value FROM questions WHERE ${col2} IS NOT NULL AND ${col2} != '' ORDER BY value ASC`);
-          return rows.map(r => r.value);
-        } catch (e2) {
-          return [];
-        }
-      }
-    };
-
     const sources = await getDistinct('source', 'banca');
     const specialties = await getDistinct('specialty', 'subject');
-    
-    // Anos geralmente é 'year'
-    let years = [];
-    try {
-      const [rows]: [any[], any] = await db.query("SELECT DISTINCT year FROM questions WHERE year IS NOT NULL ORDER BY year DESC");
-      years = rows.map(r => r.year);
-    } catch (e) {}
 
-    // Tópicos / Instituições
-    let topics = [];
+    // Anos
+    let years: any[] = [];
+    try {
+      const [rows]: [any[], any] = await db.query(
+        "SELECT DISTINCT year FROM questions WHERE year IS NOT NULL ORDER BY year DESC"
+      );
+      years = rows.map((r) => r.year);
+    } catch (e) {
+      console.error("Erro ao buscar anos:", e);
+    }
+
+    // Tópicos
+    let topics: any[] = [];
     try {
       let query = "SELECT DISTINCT topic as value FROM questions WHERE topic IS NOT NULL AND topic != ''";
-      const params = [];
+      const params: any[] = [];
       if (specialty && specialty !== 'all') {
-        query += " AND (specialty = ? OR subject = ?)";
-        params.push(specialty, specialty);
+        // ATENÇÃO: Aqui ainda está usando 'subject' que pode não existir
+        // Se já corrigimos o banco, use apenas 'specialty'
+        query += " AND specialty = ?";
+        params.push(specialty);
       }
       query += " ORDER BY value ASC";
       const [rows]: [any[], any] = await db.query(query, params);
-      topics = rows.map(r => r.value);
+      topics = rows.map((r) => r.value);
     } catch (e) {
-      try {
-        let query = "SELECT DISTINCT institution as value FROM questions WHERE institution IS NOT NULL AND institution != ''";
-        const params = [];
-        if (specialty && specialty !== 'all') {
-          query += " AND (specialty = ? OR subject = ?)";
-          params.push(specialty, specialty);
-        }
-        query += " ORDER BY value ASC";
-        const [rows]: [any[], any] = await db.query(query, params);
-        topics = rows.map(r => r.value);
-      } catch (e2) {}
+      console.error("Erro ao buscar tópicos:", e);
     }
 
     res.json({
@@ -66,7 +67,38 @@ router.get('/', async (req, res) => {
     });
   } catch (error: any) {
     console.error('ERRO NA ROTA /api/filters:', error);
-    res.status(500).json({ error: 'Erro ao buscar filtros', details: error.message });
+    res.status(500).json({ 
+      error: 'Erro ao buscar filtros', 
+      details: error.message 
+    });
+  }
+});
+
+// Nova rota para buscar tópicos filtrados por especialidade
+router.get('/filtered-topics', async (req: Request, res: Response) => {
+  try {
+    const { specialty } = req.query;
+
+    let query = 'SELECT DISTINCT topic FROM questions WHERE topic IS NOT NULL AND topic != ""';
+    const queryParams: any[] = [];
+
+    if (specialty && specialty !== 'all' && specialty !== '') {
+      query += ' AND specialty = ?';
+      queryParams.push(specialty);
+    }
+
+    query += ' ORDER BY topic';
+    const [topics]: [any[], any] = await db.query(query, queryParams);
+
+    // Retorna no formato esperado pelo frontend: { topics: [...] }
+    res.json({ topics: topics.map((t: any) => t.topic) });
+
+  } catch (error: any) {
+    console.error('ERRO NA ROTA /api/filtered-topics:', error);
+    res.status(500).json({ 
+      error: 'Erro ao buscar tópicos filtrados', 
+      details: error.message 
+    });
   }
 });
 

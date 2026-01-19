@@ -46,10 +46,11 @@ app.use((req, res, next) => {
 });
 
 // Rotas da API
-app.use("/api/filters", filtersRoutes);
+app.use("/api/filters", filtersRoutes); // ✅ Esta linha JÁ inclui /api/filters/filtered-topics
 app.use("/api/questions", questionsRoutes);
 app.use("/api/resolutions", resolutionsRoutes);
 app.use("/api/user-answers", userAnswersRoutes);
+// REMOVA ESTA LINHA: app.use('/api/filtered-topics', getFilteredTopics);
 
 // Servir arquivos estáticos
 app.use(express.static(clientBuildPath));
