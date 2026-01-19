@@ -92,6 +92,8 @@ export default function Home() {
     if (currentFilters.year !== "all") params.year = currentFilters.year;
     if (currentFilters.specialty !== "all") params.specialty = currentFilters.specialty;
     if (currentFilters.topic !== "all") params.topic = currentFilters.topic;
+    params.limit = parseInt(currentFilters.limit) || 10;
+    params.page = 1;
 
     const response = await questionsApi.getQuestions(params);
     
@@ -160,18 +162,47 @@ export default function Home() {
 };
 
   const handleStartQuiz = () => {
-    if (questions.length === 0) return;
+    if (loading) return;
     
-    // Lógica Corrigida
-const limit = parseInt(filters.limit) || 10;
-const shuffled = [...questions].sort(() => Math.random() - 0.5);
-const selectedQuestions = shuffled.slice(0, limit);
+    setLoading(true);
+    try {
+   	 const quizFilters = { ...filters };
+    	const limit = parseInt(quizFilters.limit) || 10;
+        
+    	const params: any = {};
+   	 if (quizFilters.source !== "all") params.source = quizFilters.source;
+    	if (quizFilters.year !== "all") params.year = quizFilters.year;
+   	 if (quizFilters.specialty !== "all") params.specialty = quizFilters.specialty;
+    	if (quizFilters.topic !== "all") params.topic = quizFilters.topic;
+    
+    	params.limit = limit;
+    	params.page = 1; 
+    
+  	  const response = await questionsApi.getQuestions(params);
+  	  const responseData = response?.data || response;
+    
+  	  let questionsList = [];
+  	  if (Array.isArray(responseData.questions)) {
+   		   questionsList = responseData.questions;
+  	  } else if (Array.isArray(responseData)) {
+   		   questionsList = responseData;
+   	 }
+    
+    const availableQuestions = Math.min(questionsList.length, limit);
+    
+    if (availableQuestions === 0) {
+      alert("Nenhuma questão encontrada com os filtros atuais!");
+      setLoading(false);
+      return;
+    }
+    
+    const shuffled = [...questionsList].sort(() => Math.random() - 0.5);
+    const selectedQuestions = shuffled.slice(0, availableQuestions);
+    
     
     setQuestions(selectedQuestions);
     setCurrentIndex(0);
     setStats({ correct: 0, incorrect: 0 });
-    
-    // Inicializar status de todas as questões
     setQuestionStatuses(
       selectedQuestions.map(() => ({
         answered: false,
@@ -180,7 +211,14 @@ const selectedQuestions = shuffled.slice(0, limit);
     );
     
     setPageState("quiz");
-  };
+    
+  } catch (error) {
+    console.error("❌ Erro ao iniciar simulado:", error);
+    alert("Erro ao carregar questões para o simulado. Tente novamente.");
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleAnswer = (selectedAnswer: string, isCorrect: boolean) => {
     // Atualizar estatísticas
