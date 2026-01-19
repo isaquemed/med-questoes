@@ -61,10 +61,13 @@ router.get('/', async (req, res) => {
 
     // 4. Buscar todas as alternativas para as questões selecionadas em uma única query
     const questionIds = questions.map(q => q.id);
-    // No mysql2, para usar IN (?) com um array, o array deve estar dentro de outro array: [[ids]]
+	if (questionIds.length === 0) {
+  		return [];
+	}
+    const placeholders = questionIds.map(() => '?').join(',');
     const [allAlternatives]: [any[], any] = await db.query(
-      "SELECT * FROM alternatives WHERE question_id IN (?) ORDER BY question_id, letter",
-      [ [questionIds] ]
+      "SELECT * FROM alternatives WHERE question_id IN (${placeholders}) ORDER BY question_id, letter",
+      questionIds
     );
 
     // 5. Agrupar alternativas por questão
