@@ -66,8 +66,8 @@ router.get('/', async (req, res) => {
 	}
     const placeholders = questionIds.map(() => '?').join(',');
     const [allAlternatives]: [any[], any] = await db.query(
-      "SELECT * FROM alternatives WHERE question_id IN (${placeholders}) ORDER BY question_id, letter",
-      questionIds
+      `SELECT * FROM alternatives WHERE question_id IN (${placeholders}) ORDER BY question_id, letter`,
+  questionIds
     );
 
     // 5. Agrupar alternativas por questão
