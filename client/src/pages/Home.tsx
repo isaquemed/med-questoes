@@ -123,26 +123,41 @@ export default function Home() {
 };
 
   const handleFilterChange = async (key: string, value: string) => {
-    console.log(`Alterando filtro ${key} para:`, value);
-    const newFilters = { ...filters, [key]: value };
+  const newFilters = { ...filters, [key]: value };
+  
+  if (key === "specialty") {
+    newFilters.topic = "all";
     
-    if (key === "specialty") {
-      newFilters.topic = "all";
-      try {
-        const response = await fetch(`/api/filters/filtered-topics?specialty=	${encodeURIComponent(value)}`);
-        setAvailableFilters(prev => ({
-        	...prev,
-       		 topics: data.topics || []
-      	}));
-      } catch (err) {
-        console.error("Erro ao buscar sub-filtros:", err);
+    try {
+      // CORREÇÃO: Extrair os dados da resposta
+      const response = await fetch(`/api/filters/filtered-topics?specialty=${encodeURIComponent(value)}`);
+      
+      // 1. Verifica se a resposta foi bem-sucedida
+      if (!response.ok) {
+        throw new Error(`Erro HTTP: ${response.status}`);
       }
+      
+      // 2. Extrai os dados JSON da resposta
+      const result = await response.json();
+      
+      // 3. CORREÇÃO: Usa 'result' em vez de 'data'
+      setAvailableFilters(prev => ({
+        ...prev,
+        topics: result.topics || []
+      }));
+      
+      
+    } catch (err) {
+      setAvailableFilters(prev => ({
+        ...prev,
+        topics: []
+      }));
     }
-    
-    setFilters(newFilters);
-    // Forçar a busca de questões com os novos filtros
-    await fetchQuestions(newFilters);
-  };
+  }
+  
+  setFilters(newFilters);
+  await fetchQuestions(newFilters);
+};
 
   const handleStartQuiz = () => {
     if (questions.length === 0) return;
