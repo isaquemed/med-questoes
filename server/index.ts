@@ -22,9 +22,18 @@ const clientBuildPath = path.resolve(__dirname, '../../dist');
 console.log("Caminho do build do cliente:", clientBuildPath);
 
 // Middlewares de segurança e utilitários
-// Desativando CSP temporariamente para garantir que o site carregue no Render
 app.use(helmet({
-  contentSecurityPolicy: false,
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+      styleSrc: ["'self'", "https://fonts.googleapis.com", "'unsafe-inline'"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com", "data:", "https://use.typekit.net"],
+      imgSrc: ["'self'", "data:", "blob:", "https:*"],
+      connectSrc: ["'self'", "https:*"], 
+    },
+  },
+  crossOriginEmbedderPolicy: false,
 }));
 
 app.use(cors());
