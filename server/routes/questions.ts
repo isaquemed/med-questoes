@@ -23,7 +23,7 @@ router.get('/', async (req, res) => {
       params.push(parseInt(year as string, 10));
     }
     if (specialty && specialty !== 'all') {
-      whereClause += " AND (specialty = ? OR subject = ?)";
+      whereClause += " AND (specialty = ?)";
       params.push(specialty as string, specialty as string);
     }
     if (topic && topic !== 'all') {
