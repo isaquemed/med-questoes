@@ -290,7 +290,7 @@ const selectedQuestions = shuffled.slice(0, limit);
                   <Filter size={18} /> Filtros Avançados
                 </div>
                 <Button variant="ghost" size="sm" className="text-gray-400" onClick={() =>{ setFilters({ source: "all", year: "all", specialty: "all", topic: "all", limit: "10" });
-fetchFilters(); await fetchQuestions();;
+fetchFilters(); fetchQuestions();;
 }}
 >
                   Limpar Filtros
