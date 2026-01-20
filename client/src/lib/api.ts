@@ -46,11 +46,15 @@ export const questionsApi = {
    */
   getQuestions: (params?: any) => api.get('/questions', { params }),
 
-  /**
-   * Gera resolução para uma questão
-   */
-  generateResolution: (questionId: string, questionText: string) => 
-    api.post('/resolutions/generate', { questionId, questionText }),
+  generateResolution: async (questionId: string, questionText: string) => {
+    try {
+      const response = await api.post('/resolutions/generate', { questionId, questionText });
+      return response.data; // ✅ Agora retorna diretamente { resolution: "..." }
+    } catch (error) {
+      console.error('Error generating resolution:', error);
+      throw error;
+    }
+  },
 };
 
 export default api;
