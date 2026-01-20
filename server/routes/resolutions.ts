@@ -13,13 +13,14 @@ router.post('/generate', async (req, res) => {
     }
 
 
-    // 1. PRIMEIRO: Verifica se já existe uma resolução no banco
+    // 1. Verifica se já existe uma resolução no banco
     const [existingResolutions]: [any[], any] = await db.query(
       "SELECT resolution FROM resolutions WHERE question_id = ? ORDER BY created_at DESC LIMIT 1",
       [questionId]
     );
 
     if (existingResolutions.length > 0) {
+      console.log(`📋 Resolução já existe, retornando do banco`);
       return res.json({ resolution: existingResolutions[0].resolution });
     }
 
@@ -54,13 +55,20 @@ ${questionText}
     await db.query(sql, [questionId, resolution]);
 
 
+    // 4. RETORNA A RESPOSTA PARA O FRONTEND
     return res.json({ resolution });
 
   } catch (error) {
     console.error('❌ Erro ao gerar resolução:', error);
+    
+    // CORREÇÃO TYPESCRIPT: Tratar erro como unknown
+    const errorMessage = error instanceof Error 
+      ? error.message 
+      : 'Erro desconhecido ao gerar resolução';
+    
     return res.status(500).json({ 
       message: 'Error generating resolution',
-      details: error.message 
+      details: errorMessage  // Agora é string, não unknown
     });
   }
 });
