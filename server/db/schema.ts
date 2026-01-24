@@ -32,7 +32,6 @@ export const markedQuestions = mysqlTable("marked_questions", {
   markedAt: int("marked_at").notNull(),
 });
 
-// NOVA tabela para salvar resoluções geradas pela IA
 export const resolutions = mysqlTable("resolutions", {
   id: serial("id").primaryKey(),
   questionId: int("question_id").notNull(),
