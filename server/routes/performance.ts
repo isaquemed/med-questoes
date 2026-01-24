@@ -1,5 +1,5 @@
 import express from "express";
-import { db } from "../db/index.js";
+import  db  from "../db/index.js";
 import { respostas, desempenhoTemas } from "../db/schema.js";
 import { eq, and } from "drizzle-orm";
 import { authenticateToken } from "../middleware/auth.js";
