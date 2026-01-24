@@ -20,4 +20,3 @@ export default mysql.createPool({
 });
 
 export const db = drizzle(connection, { schema, mode: "default" });
-export { connection };
