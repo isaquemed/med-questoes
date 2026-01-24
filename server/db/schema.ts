@@ -1,4 +1,4 @@
-import { mysqlTable, serial, text, varchar, int, boolean, datetime } from "drizzle-orm/mysql-core";
+import { mysqlTable, serial, text, varchar, int, boolean, decimal, datetime, sql } from "drizzle-orm/mysql-core";
 
 export const questions = mysqlTable("questions", {
   id: serial("id").primaryKey(),
@@ -35,7 +35,7 @@ export const usuarios = mysqlTable("usuarios", {
   email: varchar("email", { length: 255 }).notNull().unique(),
   senha: varchar("senha", { length: 255 }).notNull(),
   nome: varchar("nome", { length: 100 }).notNull(),
-  dataCadastro: datetime("data_cadastro").default(new Date().toISOString()),
+  dataCadastro: datetime("data_cadastro").default(sql`CURRENT_TIMESTAMP`),
 });
 
 export const respostas = mysqlTable("respostas", {
@@ -46,7 +46,7 @@ export const respostas = mysqlTable("respostas", {
   acertou: boolean("acertou").notNull(),
   tempoResposta: int("tempo_resposta"),
   tema: varchar("tema", { length: 100 }),
-  dataResposta: datetime("data_resposta").default(new Date().toISOString()),
+  dataResposta: datetime("data_resposta").default(sql`CURRENT_TIMESTAMP`),
 });
 
 export const desempenhoTemas = mysqlTable("desempenho_temas", {
@@ -57,7 +57,7 @@ export const desempenhoTemas = mysqlTable("desempenho_temas", {
   acertos: int("acertos").default(0),
   erros: int("erros").default(0),
   taxaAcerto: decimal("taxa_acerto", { precision: 5, scale: 2 }).default("0.00"),
-  ultimaAtualizacao: datetime("ultima_atualizacao").default(new Date().toISOString()),
+  ultimaAtualizacao: datetime("ultima_atualizacao").default(sql`CURRENT_TIMESTAMP`),
 });
 
 
