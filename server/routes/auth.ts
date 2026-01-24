@@ -1,7 +1,9 @@
-import express from "express";
-import db from "../db/index.js";
+import { db } from "../db/index";
+import { usuarios } from "../db/schema";
+import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import express from "express";
 
 const router = express.Router();
 

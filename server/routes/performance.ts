@@ -1,5 +1,7 @@
 import express from "express";
-import db from "../db/index.js";
+import { db } from "../db/index.js";
+import { respostas, desempenhoTemas } from "../db/schema.js";
+import { eq, and } from "drizzle-orm";
 import { authenticateToken } from "../middleware/auth.js";
 
 const router = express.Router();
@@ -13,23 +15,55 @@ router.post("/save-answer", async (req: any, res) => {
     const usuario_id = req.user.id;
 
     // Salvar resposta
-    await pool.execute(
-      `INSERT INTO respostas (usuario_id, questao_id, opcao_escolhida, acertou, tempo_resposta, tema) 
-       VALUES (?, ?, ?, ?, ?, ?)`,
-      [usuario_id, questao_id, opcao_escolhida, acertou, tempo_resposta, tema]
-    );
+    await db.insert(respostas).values({
+      usuarioId: usuario_id,
+      questaoId: questao_id,
+      opcaoEscolhida: opcao_escolhida,
+      acertou: acertou,
+      tempoResposta: tempo_resposta,
+      tema: tema,
+    });
 
-    // Atualizar desempenho do tema
-    await pool.execute(
-      `INSERT INTO desempenho_temas (usuario_id, tema, total_questoes, acertos, erros, taxa_acerto)
-       VALUES (?, ?, 1, ?, ?, ?)
-       ON DUPLICATE KEY UPDATE
-       total_questoes = total_questoes + 1,
-       acertos = acertos + VALUES(acertos),
-       erros = erros + VALUES(erros),
-       taxa_acerto = (acertos + VALUES(acertos)) / (total_questoes + 1) * 100`,
-      [usuario_id, tema, acertou ? 1 : 0, acertou ? 0 : 1, acertou ? 100 : 0]
-    );
+    // Verificar se já existe desempenho para este tema
+    const existingPerformance = await db
+      .select()
+      .from(desempenhoTemas)
+      .where(
+        and(
+          eq(desempenhoTemas.usuarioId, usuario_id),
+          eq(desempenhoTemas.tema, tema)
+        )
+      )
+      .limit(1);
+
+    if (existingPerformance.length > 0) {
+      // Atualizar desempenho existente
+      const current = existingPerformance[0];
+      const novoTotal = current.totalQuestoes + 1;
+      const novosAcertos = current.acertos + (acertou ? 1 : 0);
+      const novosErros = current.erros + (acertou ? 0 : 1);
+      const novaTaxa = (novosAcertos / novoTotal) * 100;
+
+      await db
+        .update(desempenhoTemas)
+        .set({
+          totalQuestoes: novoTotal,
+          acertos: novosAcertos,
+          erros: novosErros,
+          taxaAcerto: novaTaxa.toString(),
+        })
+        .where(eq(desempenhoTemas.id, current.id));
+    } else {
+      // Criar novo registro de desempenho
+      await db.insert(desempenhoTemas).values({
+        usuarioId: usuario_id,
+        tema: tema,
+        totalQuestoes: 1,
+        acertos: acertou ? 1 : 0,
+        erros: acertou ? 0 : 1,
+        taxaAcerto: acertou ? "100.00" : "0.00",
+      });
+    }
 
     res.json({ message: "Resposta salva com sucesso!" });
   } catch (error: any) {
@@ -44,34 +78,26 @@ router.get("/", async (req: any, res) => {
     const usuario_id = req.user.id;
 
     // Desempenho por tema
-    const [temas] = await pool.execute(
-      "SELECT * FROM desempenho_temas WHERE usuario_id = ? ORDER BY tema",
-      [usuario_id]
-    );
-
-    // Últimas respostas
-    const [respostas] = await pool.execute(
-      `SELECT r.*, q.question 
-       FROM respostas r 
-       LEFT JOIN questions q ON r.questao_id = q.id 
-       WHERE r.usuario_id = ? 
-       ORDER BY r.data_resposta DESC 
-       LIMIT 10`,
-      [usuario_id]
-    );
+    const temas = await db
+      .select()
+      .from(desempenhoTemas)
+      .where(eq(desempenhoTemas.usuarioId, usuario_id));
 
     // Calcular estatísticas gerais
-    let totalQuestoes = 0;
-    let totalAcertos = 0;
-    (temas as any[]).forEach((t: any) => {
-      totalQuestoes += t.total_questoes;
-      totalAcertos += t.acertos;
-    });
+    const totalQuestoes = temas.reduce((sum, t) => sum + t.totalQuestoes, 0);
+    const totalAcertos = temas.reduce((sum, t) => sum + t.acertos, 0);
     const taxaGeral = totalQuestoes > 0 ? (totalAcertos / totalQuestoes) * 100 : 0;
+
+    // Últimas respostas
+    const respostasUsuario = await db
+      .select()
+      .from(respostas)
+      .where(eq(respostas.usuarioId, usuario_id))
+      .limit(10);
 
     res.json({
       temas,
-      respostas,
+      respostas: respostasUsuario,
       estatisticas: {
         totalQuestoes,
         totalAcertos,
