@@ -385,13 +385,19 @@ const saveAnswer = async (isCorrect: boolean, selectedOption: string, questionId
   try {
     // Tentar salvar no backend
     if (token) {
-      const response = await fetch("/api/performance/save-answer", {
+      const response = await fetch("/api/user-answers", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(answerData),
+        body: JSON.stringify({
+          questionId: questionId,
+          selectedAnswer: selectedOption,
+          isCorrect: isCorrect,
+          tempoResposta: timeSpent,
+          tema: tema
+        }),
       });
 
       if (!response.ok) {
@@ -496,6 +502,13 @@ const updatePerformance = (tema: string, acertou: boolean) => {
         >
           <BarChart3 size={14} />
           Desempenho
+        </button>
+        <button
+          onClick={() => setLocation('/error-notebook')}
+          className="user-action-link flex items-center gap-1"
+        >
+          <BookOpen size={14} />
+          Erros
         </button>
         <button
           onClick={handleLogout}

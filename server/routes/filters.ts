@@ -1,18 +1,18 @@
 import { Router, Request, Response } from "express";
-import db from "../db/index.js";
+import pool from "../db/index.js";
 
 const router = Router();
 
 // Função auxiliar para tentar buscar de múltiplas colunas possíveis
 const getDistinct = async (col1: string, col2: string) => {
   try {
-    const [rows]: [any[], any] = await db.query(
+    const [rows]: [any[], any] = await pool.query(
       `SELECT DISTINCT ${col1} as value FROM questions WHERE ${col1} IS NOT NULL AND ${col1} != '' ORDER BY value ASC`
     );
     return rows.map((r) => r.value);
   } catch (e) {
     try {
-      const [rows]: [any[], any] = await db.query(
+      const [rows]: [any[], any] = await pool.query(
         `SELECT DISTINCT ${col2} as value FROM questions WHERE ${col2} IS NOT NULL AND ${col2} != '' ORDER BY value ASC`
       );
       return rows.map((r) => r.value);
@@ -23,17 +23,15 @@ const getDistinct = async (col1: string, col2: string) => {
 };
 
 // Rota principal para buscar filtros disponíveis
-router.get('/', async (req: Request, res: Response) => {
+router.get('/', async (req: any, res: any) => {
   try {
-    const { specialty } = req.query;
-
     const sources = await getDistinct('source', 'banca');
     const specialties = await getDistinct('specialty', 'subject');
 
     // Anos
     let years: any[] = [];
     try {
-      const [rows]: [any[], any] = await db.query(
+      const [rows]: [any[], any] = await pool.query(
         "SELECT DISTINCT year FROM questions WHERE year IS NOT NULL ORDER BY year DESC"
       );
       years = rows.map((r) => r.year);
@@ -44,16 +42,9 @@ router.get('/', async (req: Request, res: Response) => {
     // Tópicos
     let topics: any[] = [];
     try {
-      let query = "SELECT DISTINCT topic as value FROM questions WHERE topic IS NOT NULL AND topic != ''";
-      const params: any[] = [];
-      if (specialty && specialty !== 'all') {
-        // ATENÇÃO: Aqui ainda está usando 'subject' que pode não existir
-        // Se já corrigimos o banco, use apenas 'specialty'
-        query += " AND specialty = ?";
-        params.push(specialty);
-      }
-      query += " ORDER BY value ASC";
-      const [rows]: [any[], any] = await db.query(query, params);
+      const [rows]: [any[], any] = await pool.query(
+        "SELECT DISTINCT topic as value FROM questions WHERE topic IS NOT NULL AND topic != '' ORDER BY value ASC"
+      );
       topics = rows.map((r) => r.value);
     } catch (e) {
       console.error("Erro ao buscar tópicos:", e);
@@ -75,7 +66,7 @@ router.get('/', async (req: Request, res: Response) => {
 });
 
 // Nova rota para buscar tópicos filtrados por especialidade
-router.get('/filtered-topics', async (req: Request, res: Response) => {
+router.get('/filtered-topics', async (req: any, res: any) => {
   try {
     const { specialty } = req.query;
 
@@ -88,7 +79,7 @@ router.get('/filtered-topics', async (req: Request, res: Response) => {
     }
 
     query += ' ORDER BY topic';
-    const [topics]: [any[], any] = await db.query(query, queryParams);
+    const [topics]: [any[], any] = await pool.query(query, queryParams);
 
     // Retorna no formato esperado pelo frontend: { topics: [...] }
     res.json({ topics: topics.map((t: any) => t.topic) });

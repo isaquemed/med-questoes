@@ -42,7 +42,7 @@ app.use(cors());
 app.use(express.json());
 
 // Middleware de Log de Requisições
-app.use((req, res, next) => {
+app.use((req: any, res: any, next: any) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
   next();
 });
@@ -60,9 +60,9 @@ app.use("/api/performance", performanceRoutes);
 app.use(express.static(clientBuildPath));
 
 // Rota de fallback para o SPA (React)
-app.get("*", (req, res) => {
+app.get("*", (req: any, res: any) => {
   const indexPath = path.join(clientBuildPath, 'index.html');
-  res.sendFile(indexPath, (err) => {
+  res.sendFile(indexPath, (err: any) => {
     if (err) {
       console.error("Erro ao enviar index.html:", err);
       res.status(500).send("Erro ao carregar o site. Verifique se o build do frontend foi concluído.");
@@ -71,7 +71,7 @@ app.get("*", (req, res) => {
 });
 
 // Tratamento de erro global
-app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+app.use((err: any, req: any, res: any, next: any) => {
   console.error("ERRO NÃO TRATADO:", err);
   res.status(500).json({ error: "Erro interno do servidor", details: err.message });
 });

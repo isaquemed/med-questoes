@@ -1,5 +1,6 @@
 import express from "express";
-import  db  from "../db/index.js";
+import pool from "../db/index.js";
+import { db } from "../db/index.js";
 import { usuarios } from "../db/schema.js";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
@@ -8,7 +9,7 @@ import jwt from "jsonwebtoken";
 const router = express.Router();
 
 // Registro de usuário
-router.post("/register", async (req, res) => {
+router.post("/register", async (req: any, res: any) => {
   try {
     const { nome, email, senha } = req.body;
 
@@ -26,11 +27,11 @@ router.post("/register", async (req, res) => {
     const hashedPassword = await bcrypt.hash(senha, 10);
 
     // Inserir novo usuário
-    const [newUser] = await db.insert(usuarios).values({
+    const [newUser]: any = await db.insert(usuarios).values({
       email,
       senha: hashedPassword,
       nome,
-      dataCadastro: new Date().toISOString(),
+      dataCadastro: new Date(),
     });
 
     const token = jwt.sign(
@@ -54,7 +55,7 @@ router.post("/register", async (req, res) => {
 });
 
 // Login de usuário
-router.post("/login", async (req, res) => {
+router.post("/login", async (req: any, res: any) => {
   try {
     const { email, senha } = req.body;
 

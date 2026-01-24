@@ -1,5 +1,6 @@
 import express from "express";
-import  db  from "../db/index.js";
+import pool from "../db/index.js";
+import { db } from "../db/index.js";
 import { respostas, desempenhoTemas } from "../db/schema.js";
 import { eq, and } from "drizzle-orm";
 import { authenticateToken } from "../middleware/auth.js";
@@ -10,7 +11,7 @@ const router = express.Router();
 router.use(authenticateToken);
 
 // Salvar resposta e atualizar desempenho
-router.post("/save-answer", async (req: any, res) => {
+router.post("/save-answer", async (req: any, res: any) => {
   try {
     const { questao_id, opcao_escolhida, acertou, tempo_resposta, tema } = req.body;
     const usuario_id = req.user.id;
@@ -18,12 +19,12 @@ router.post("/save-answer", async (req: any, res) => {
     // Salvar resposta
     await db.insert(respostas).values({
       usuarioId: usuario_id,
-      questaoId: questao_id.toString(), // Converta para string
+      questaoId: Number(questao_id),
       opcaoEscolhida: opcao_escolhida,
       acertou: acertou,
       tempoResposta: tempo_resposta,
       tema: tema,
-      dataResposta: new Date().toISOString(),
+      dataResposta: new Date(),
     });
 
     // Verificar se já existe desempenho para este tema
@@ -59,7 +60,7 @@ router.post("/save-answer", async (req: any, res) => {
           acertos: novosAcertos,
           erros: novosErros,
           taxaAcerto: novaTaxa.toFixed(2),
-          ultimaAtualizacao: new Date().toISOString(),
+          ultimaAtualizacao: new Date(),
         })
         .where(eq(desempenhoTemas.id, current.id));
     } else {
@@ -71,7 +72,7 @@ router.post("/save-answer", async (req: any, res) => {
         acertos: acertou ? 1 : 0,
         erros: acertou ? 0 : 1,
         taxaAcerto: acertou ? "100.00" : "0.00",
-        ultimaAtualizacao: new Date().toISOString(),
+        ultimaAtualizacao: new Date(),
       });
     }
 
@@ -83,7 +84,7 @@ router.post("/save-answer", async (req: any, res) => {
 });
 
 // Obter desempenho do usuário
-router.get("/", async (req: any, res) => {
+router.get("/", async (req: any, res: any) => {
   try {
     const usuario_id = req.user.id;
 

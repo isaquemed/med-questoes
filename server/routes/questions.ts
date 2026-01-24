@@ -1,9 +1,9 @@
 import { Router } from "express";
-import db from "../db/index.js";
+import pool from "../db/index.js";
 
 const router = Router();
 
-router.get('/', async (req, res) => {
+router.get('/', async (req: any, res: any) => {
   try {
     const { source, year, specialty, topic, limit = 10, offset = 0 } = req.query;
 
@@ -16,7 +16,7 @@ router.get('/', async (req, res) => {
     // Mapeamento flexível para suportar diferentes nomes de colunas
     if (source && source !== 'all') {
       whereClause += " AND (source = ?)";
-      params.push(source as string, source as string);
+      params.push(source as string);
     }
     if (year && year !== 'all') {
       whereClause += " AND year = ?";
@@ -32,7 +32,7 @@ router.get('/', async (req, res) => {
     }
 
     // 2. Buscar o total de questões para paginação
-    const [countResult]: [any[], any] = await db.query(
+    const [countResult]: [any[], any] = await pool.query(
       `SELECT COUNT(*) as total FROM questions ${whereClause}`,
       params
     );
@@ -46,7 +46,7 @@ router.get('/', async (req, res) => {
       LIMIT ? OFFSET ?
     `;
     
-    const [questions]: [any[], any] = await db.query(questionsQuery, [
+    const [questions]: [any[], any] = await pool.query(questionsQuery, [
       ...params, 
       Number(limit), 
       Number(offset)
@@ -65,7 +65,7 @@ router.get('/', async (req, res) => {
   		return [];
 	}
     const placeholders = questionIds.map(() => '?').join(',');
-    const [allAlternatives]: [any[], any] = await db.query(
+    const [allAlternatives]: [any[], any] = await pool.query(
       `SELECT * FROM alternatives WHERE question_id IN (${placeholders}) ORDER BY question_id, letter`,
   questionIds
     );
@@ -82,13 +82,18 @@ router.get('/', async (req, res) => {
 
     // 6. Montar o objeto final com mapeamento de compatibilidade
     const questionsWithAlternatives = questions.map(question => ({
-      ...question,
-      // Normalização de campos para o frontend
-      source: question.source || question.banca,
-      specialty: question.specialty || question.subject,
-      topic: question.topic || question.institution,
-      correctAnswer: question.correctAnswer || question.correct_answer,
-      alternatives: alternativesMap[question.id] || []
+      id: question.id,
+      question: question.question,
+      source: question.source,
+      specialty: question.specialty,
+      topic: question.topic,
+      year: question.year,
+      correctAnswer: question.correct_answer || question.correctAnswer,
+      resolution: question.resolution,
+      alternatives: (alternativesMap[question.id] || []).map((alt: any) => ({
+        letter: alt.letter,
+        text: alt.text
+      }))
     }));
 
     res.json({

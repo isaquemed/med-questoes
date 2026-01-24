@@ -1,10 +1,10 @@
 import { Router } from "express";
-import db from "../db/index.js";
+import pool from "../db/index.js";
 import { difyService } from "../services/difyService.js";
 
 const router = Router();
 
-router.post('/generate', async (req, res) => {
+router.post('/generate', async (req: any, res: any) => {
   try {
     const { questionId, questionText } = req.body;
 
@@ -14,7 +14,7 @@ router.post('/generate', async (req, res) => {
 
 
     // 1. Verifica se já existe uma resolução no banco
-    const [existingResolutions]: [any[], any] = await db.query(
+    const [existingResolutions]: [any[], any] = await pool.query(
       "SELECT resolution FROM resolutions WHERE question_id = ? ORDER BY created_at DESC LIMIT 1",
       [questionId]
     );
@@ -52,7 +52,7 @@ ${questionText}
     // 3. SALVA no banco de dados
     const sql = `INSERT INTO resolutions (question_id, resolution) VALUES (?, ?)`;
     
-    await db.query(sql, [questionId, resolution]);
+    await pool.query(sql, [questionId, resolution]);
 
 
     // 4. RETORNA A RESPOSTA PARA O FRONTEND

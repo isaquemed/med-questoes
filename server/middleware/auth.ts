@@ -6,15 +6,15 @@ export interface AuthenticatedRequest extends Request {
 }
 
 export function authenticateToken(
-  req: AuthenticatedRequest,
-  res: Response,
-  next: NextFunction
+  req: any,
+  res: any,
+  next: any
 ) {
   const authHeader = req.headers["authorization"];
   const token = authHeader && authHeader.split(" ")[1];
 
   if (!token) {
-    return res.sendStatus(401);
+    return res.status(401).json({ error: "Token não fornecido" });
   }
 
   jwt.verify(
@@ -22,7 +22,8 @@ export function authenticateToken(
     process.env.JWT_SECRET || "sua-chave-secreta-aqui",
     (err: any, user: any) => {
       if (err) {
-        return res.sendStatus(403);
+        console.error("Erro ao verificar token:", err);
+        return res.status(403).json({ error: "Token inválido ou expirado" });
       }
       req.user = user;
       next();

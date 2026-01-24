@@ -1,0 +1,314 @@
+/* ================================ */
+/* MELHORIAS DE DESIGN E LAYOUT     */
+/* ================================ */
+
+/* User Info Panel */
+.user-info-panel {
+  @apply flex items-center justify-between p-4 bg-card border-b border-border mb-6 rounded-lg shadow-sm;
+}
+
+.user-action-link {
+  @apply text-sm font-medium text-primary hover:text-primary/80 transition-colors cursor-pointer;
+}
+
+/* Skeleton Loaders */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Stats Grid */
+.stats-grid {
+  @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4;
+}
+
+.stat-card {
+  @apply bg-card rounded-lg border border-border p-6 space-y-2;
+}
+
+.stat-value {
+  @apply text-3xl font-bold text-primary;
+}
+
+.stat-label {
+  @apply text-sm text-muted-foreground;
+}
+
+.theme-progress {
+  @apply h-2 bg-secondary rounded-full overflow-hidden mt-2;
+}
+
+.theme-progress-bar {
+  @apply h-full bg-primary transition-all duration-300;
+}
+
+/* Cards com Hover */
+.card-hover {
+  @apply transition-all duration-200 hover:shadow-lg hover:scale-105;
+}
+
+/* Badges */
+.badge {
+  @apply inline-block px-3 py-1 rounded-full text-sm font-medium;
+}
+
+.badge-primary {
+  @apply bg-primary/10 text-primary;
+}
+
+.badge-success {
+  @apply bg-green-100 text-green-700;
+}
+
+.badge-error {
+  @apply bg-red-100 text-red-700;
+}
+
+.badge-warning {
+  @apply bg-yellow-100 text-yellow-700;
+}
+
+/* Loading States */
+.loading-spinner {
+  @apply inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-current;
+}
+
+/* Responsive Grid */
+@media (max-width: 768px) {
+  .stats-grid {
+    @apply grid-cols-2;
+  }
+
+  .stat-value {
+    @apply text-2xl;
+  }
+}
+
+/* Melhorias no Layout */
+.page-container {
+  @apply min-h-screen bg-background;
+}
+
+.page-header {
+  @apply border-b border-border bg-card sticky top-0 z-50;
+}
+
+.page-content {
+  @apply max-w-7xl mx-auto px-4 py-8;
+}
+
+/* Melhorias em Tabelas */
+.table-container {
+  @apply overflow-x-auto;
+}
+
+.table {
+  @apply w-full border-collapse;
+}
+
+.table th {
+  @apply bg-secondary px-4 py-3 text-left text-sm font-semibold text-foreground border-b border-border;
+}
+
+.table td {
+  @apply px-4 py-3 border-b border-border text-sm;
+}
+
+.table tbody tr:hover {
+  @apply bg-secondary/50;
+}
+
+/* Melhorias em Formulários */
+.form-group {
+  @apply space-y-2 mb-4;
+}
+
+.form-label {
+  @apply text-sm font-medium text-foreground;
+}
+
+.form-input {
+  @apply w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary;
+}
+
+.form-input:disabled {
+  @apply bg-secondary text-muted-foreground cursor-not-allowed;
+}
+
+/* Melhorias em Botões */
+.btn-group {
+  @apply flex gap-2;
+}
+
+.btn-icon {
+  @apply inline-flex items-center gap-2;
+}
+
+/* Transições Suaves */
+* {
+  @apply transition-colors duration-200;
+}
+
+/* Melhorias em Texto */
+.text-truncate {
+  @apply overflow-hidden truncate whitespace-nowrap;
+}
+
+.text-clamp {
+  @apply line-clamp-3;
+}
+
+/* Melhorias em Espaçamento */
+.space-x-2 {
+  @apply gap-2;
+}
+
+.space-y-2 {
+  @apply gap-2;
+}
+
+/* Melhorias em Cores */
+.text-success {
+  @apply text-green-600;
+}
+
+.text-error {
+  @apply text-red-600;
+}
+
+.text-warning {
+  @apply text-yellow-600;
+}
+
+.text-info {
+  @apply text-blue-600;
+}
+
+/* Gradientes */
+.gradient-primary {
+  @apply bg-gradient-to-r from-primary to-primary/80;
+}
+
+.gradient-accent {
+  @apply bg-gradient-to-r from-accent to-accent/80;
+}
+
+/* Sombras */
+.shadow-sm-custom {
+  @apply shadow-sm;
+}
+
+.shadow-md-custom {
+  @apply shadow-md;
+}
+
+.shadow-lg-custom {
+  @apply shadow-lg;
+}
+
+/* Bordas */
+.border-primary-light {
+  @apply border border-primary/20;
+}
+
+.border-accent-light {
+  @apply border border-accent/20;
+}
+
+/* Opacidades */
+.opacity-disabled {
+  @apply opacity-50 cursor-not-allowed;
+}
+
+/* Animações Customizadas */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-in {
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Melhorias em Modais */
+.modal-overlay {
+  @apply fixed inset-0 bg-black/50 flex items-center justify-center z-50;
+}
+
+.modal-content {
+  @apply bg-card rounded-lg p-6 max-w-md w-full mx-4;
+}
+
+/* Melhorias em Tooltips */
+.tooltip {
+  @apply relative inline-block;
+}
+
+.tooltip-text {
+  @apply absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-foreground text-background text-xs rounded opacity-0 pointer-events-none transition-opacity;
+}
+
+.tooltip:hover .tooltip-text {
+  @apply opacity-100;
+}
+
+/* Melhorias em Dropdowns */
+.dropdown {
+  @apply relative inline-block;
+}
+
+.dropdown-menu {
+  @apply absolute top-full left-0 mt-2 bg-card border border-border rounded-lg shadow-lg z-10 min-w-max;
+}
+
+.dropdown-item {
+  @apply px-4 py-2 hover:bg-secondary cursor-pointer transition-colors;
+}
+
+/* Melhorias em Notificações */
+.notification {
+  @apply p-4 rounded-lg border;
+}
+
+.notification-success {
+  @apply bg-green-50 border-green-200 text-green-800;
+}
+
+.notification-error {
+  @apply bg-red-50 border-red-200 text-red-800;
+}
+
+.notification-warning {
+  @apply bg-yellow-50 border-yellow-200 text-yellow-800;
+}
+
+.notification-info {
+  @apply bg-blue-50 border-blue-200 text-blue-800;
+}

@@ -6,14 +6,16 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
 import Login from "./pages/Login"; 
-import Performance from "./pages/Performance"; 
+import Performance from "./pages/Performance";
+import ErrorNotebook from "./pages/ErrorNotebook"; 
 
 function Router() {
   return (
     <Switch>
       <Route path={"/"} component={Home} />
-      <Route path={"/login"} component={Login} /> {/* Nova rota */}
-      <Route path={"/performance"} component={Performance} /> {/* Nova rota */}
+      <Route path={"/login"} component={Login} />
+      <Route path={"/performance"} component={Performance} />
+      <Route path={"/error-notebook"} component={ErrorNotebook} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />

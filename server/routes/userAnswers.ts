@@ -1,15 +1,20 @@
 import express from "express";
-import { sql } from "drizzle-orm";
+import pool from "../db/index.js";
+import { db } from "../db/index.js";
+import { userAnswers, questions } from "../db/schema.js";
+import { eq, and, desc, sql } from "drizzle-orm";
+import { authenticateToken } from "../middleware/auth.js";
 
 const router = express.Router();
 
 /**
  * POST /api/user-answers
- * Registra uma resposta do usuário
+ * Registra uma resposta do usuário (requer autenticação)
  */
-router.post("/", async (req, res) => {
+router.post("/", authenticateToken, async (req: any, res: any) => {
   try {
-    const { questionId, selectedAnswer, isCorrect } = req.body;
+    const { questionId, selectedAnswer, isCorrect, tempoResposta, tema } = req.body;
+    const usuarioId = req.user?.id;
 
     if (!questionId || !selectedAnswer || isCorrect === undefined) {
       return res.status(400).json({
@@ -17,12 +22,13 @@ router.post("/", async (req, res) => {
       });
     }
 
-    const db = req.app.get('db');
     const answeredAt = Math.floor(Date.now() / 1000);
 
-    await db.execute(
-      sql`INSERT INTO user_answers (question_id, selected_answer, is_correct, answered_at) 
-          VALUES (${questionId}, ${selectedAnswer}, ${isCorrect ? 1 : 0}, ${answeredAt})`
+    // Usar raw query para inserir
+    const [result]: [any, any] = await pool.query(
+      `INSERT INTO user_answers (usuario_id, question_id, selected_answer, is_correct, answered_at, tempo_resposta, tema) 
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [usuarioId, questionId, selectedAnswer, isCorrect ? 1 : 0, answeredAt, tempoResposta || null, tema || null]
     );
 
     res.json({
@@ -37,29 +43,30 @@ router.post("/", async (req, res) => {
 
 /**
  * GET /api/user-answers/errors
- * Retorna o caderno de erros do usuário
+ * Retorna o caderno de erros do usuário (requer autenticação)
  */
-router.get("/errors", async (req, res) => {
+router.get("/errors", authenticateToken, async (req: any, res: any) => {
   try {
-    const db = req.app.get('db');
+    const usuarioId = req.user?.id;
 
-    const [rows] = await db.execute(
-      sql`SELECT 
-            q.id,
-            q.question,
-            q.correct_answer as correctAnswer,
-            ua.selected_answer as selectedAnswer,
-            q.specialty,
-            q.source,
-            q.year,
-            ua.answered_at as answeredAt,
-            COUNT(*) as attempts
-          FROM user_answers ua
-          JOIN questions q ON ua.question_id = q.id
-          WHERE ua.is_correct = 0
-          GROUP BY q.id, ua.selected_answer
-          ORDER BY ua.answered_at DESC
-          LIMIT 100`
+    const [rows]: [any[], any] = await pool.query(
+      `SELECT 
+        q.id,
+        q.question,
+        q.correct_answer as correctAnswer,
+        ua.selected_answer as selectedAnswer,
+        q.specialty,
+        q.source,
+        q.year,
+        ua.answered_at as answeredAt,
+        COUNT(*) as attempts
+      FROM user_answers ua
+      JOIN questions q ON ua.question_id = q.id
+      WHERE ua.usuario_id = ? AND ua.is_correct = 0
+      GROUP BY q.id, ua.selected_answer
+      ORDER BY ua.answered_at DESC
+      LIMIT 100`,
+      [usuarioId]
     );
 
     res.json(rows);
@@ -71,56 +78,60 @@ router.get("/errors", async (req, res) => {
 
 /**
  * GET /api/user-answers/performance
- * Retorna análise de desempenho do usuário
+ * Retorna análise de desempenho do usuário (requer autenticação)
  */
-router.get("/performance", async (req, res) => {
+router.get("/performance", authenticateToken, async (req: any, res: any) => {
   try {
-    const db = req.app.get('db');
+    const usuarioId = req.user?.id;
 
     // Total de questões e acertos
-    const [totalStats] = await db.execute(
-      sql`SELECT 
-            COUNT(*) as totalQuestions,
-            SUM(is_correct) as correctAnswers,
-            SUM(CASE WHEN is_correct = 0 THEN 1 ELSE 0 END) as incorrectAnswers,
-            (SUM(is_correct) * 100.0 / COUNT(*)) as accuracy
-          FROM user_answers`
+    const [totalStats]: [any[], any] = await pool.query(
+      `SELECT 
+        COUNT(*) as totalQuestions,
+        SUM(is_correct) as correctAnswers,
+        SUM(CASE WHEN is_correct = 0 THEN 1 ELSE 0 END) as incorrectAnswers,
+        (SUM(is_correct) * 100.0 / COUNT(*)) as accuracy
+      FROM user_answers
+      WHERE usuario_id = ?`,
+      [usuarioId]
     );
 
-    const stats = (totalStats as any[])[0];
+    const stats = totalStats[0];
 
     if (stats.totalQuestions === 0) {
       return res.json(null);
     }
 
     // Desempenho por especialidade
-    const [bySpecialty] = await db.execute(
-      sql`SELECT 
-            q.specialty,
-            COUNT(*) as total,
-            SUM(ua.is_correct) as correct,
-            (SUM(ua.is_correct) * 100.0 / COUNT(*)) as accuracy
-          FROM user_answers ua
-          JOIN questions q ON ua.question_id = q.id
-          WHERE q.specialty IS NOT NULL
-          GROUP BY q.specialty
-          HAVING COUNT(*) >= 3
-          ORDER BY accuracy DESC`
+    const [bySpecialty]: [any[], any] = await pool.query(
+      `SELECT 
+        q.specialty,
+        COUNT(*) as total,
+        SUM(ua.is_correct) as correct,
+        (SUM(ua.is_correct) * 100.0 / COUNT(*)) as accuracy
+      FROM user_answers ua
+      JOIN questions q ON ua.question_id = q.id
+      WHERE ua.usuario_id = ? AND q.specialty IS NOT NULL
+      GROUP BY q.specialty
+      HAVING COUNT(*) >= 3
+      ORDER BY accuracy DESC`,
+      [usuarioId]
     );
 
     // Desempenho por banca
-    const [bySource] = await db.execute(
-      sql`SELECT 
-            q.source,
-            COUNT(*) as total,
-            SUM(ua.is_correct) as correct,
-            (SUM(ua.is_correct) * 100.0 / COUNT(*)) as accuracy
-          FROM user_answers ua
-          JOIN questions q ON ua.question_id = q.id
-          WHERE q.source IS NOT NULL
-          GROUP BY q.source
-          HAVING COUNT(*) >= 3
-          ORDER BY total DESC`
+    const [bySource]: [any[], any] = await pool.query(
+      `SELECT 
+        q.source,
+        COUNT(*) as total,
+        SUM(ua.is_correct) as correct,
+        (SUM(ua.is_correct) * 100.0 / COUNT(*)) as accuracy
+      FROM user_answers ua
+      JOIN questions q ON ua.question_id = q.id
+      WHERE ua.usuario_id = ? AND q.source IS NOT NULL
+      GROUP BY q.source
+      HAVING COUNT(*) >= 3
+      ORDER BY total DESC`,
+      [usuarioId]
     );
 
     // Tendência recente (últimos 7 e 30 dias)
@@ -128,49 +139,36 @@ router.get("/performance", async (req, res) => {
     const sevenDaysAgo = now - (7 * 24 * 60 * 60);
     const thirtyDaysAgo = now - (30 * 24 * 60 * 60);
 
-    const [last7Days] = await db.execute(
-      sql`SELECT (SUM(is_correct) * 100.0 / COUNT(*)) as accuracy
-          FROM user_answers
-          WHERE answered_at >= ${sevenDaysAgo}`
+    const [last7Days]: [any[], any] = await pool.query(
+      `SELECT (SUM(is_correct) * 100.0 / COUNT(*)) as accuracy
+       FROM user_answers
+       WHERE usuario_id = ? AND answered_at >= ?`,
+      [usuarioId, sevenDaysAgo]
     );
 
-    const [last30Days] = await db.execute(
-      sql`SELECT (SUM(is_correct) * 100.0 / COUNT(*)) as accuracy
-          FROM user_answers
-          WHERE answered_at >= ${thirtyDaysAgo}`
+    const [last30Days]: [any[], any] = await pool.query(
+      `SELECT (SUM(is_correct) * 100.0 / COUNT(*)) as accuracy
+       FROM user_answers
+       WHERE usuario_id = ? AND answered_at >= ?`,
+      [usuarioId, thirtyDaysAgo]
     );
 
-    const last7Accuracy = (last7Days as any[])[0]?.accuracy || 0;
-    const last30Accuracy = (last30Days as any[])[0]?.accuracy || 0;
+    const last7Accuracy = last7Days[0]?.accuracy || 0;
+    const last30Accuracy = last30Days[0]?.accuracy || 0;
     const improvement = last7Accuracy - last30Accuracy;
-
-    // Streak (dias consecutivos)
-    // Implementação simplificada - você pode melhorar isso
-    const [streakData] = await db.execute(
-      sql`SELECT COUNT(DISTINCT DATE(FROM_UNIXTIME(answered_at))) as streak
-          FROM user_answers
-          WHERE answered_at >= ${sevenDaysAgo}`
-    );
-
-    const streak = (streakData as any[])[0]?.streak || 0;
-
-    // Melhor e pior especialidade
-    const specialties = bySpecialty as any[];
-    const bestSpecialty = specialties[0]?.specialty || "";
-    const weakestSpecialty = specialties[specialties.length - 1]?.specialty || "";
 
     res.json({
       totalQuestions: stats.totalQuestions,
       correctAnswers: stats.correctAnswers,
       incorrectAnswers: stats.incorrectAnswers,
       accuracy: parseFloat(stats.accuracy),
-      bySpecialty: specialties.map((s: any) => ({
+      bySpecialty: bySpecialty.map((s: any) => ({
         specialty: s.specialty,
         total: s.total,
         correct: s.correct,
         accuracy: parseFloat(s.accuracy)
       })),
-      bySource: (bySource as any[]).map((s: any) => ({
+      bySource: bySource.map((s: any) => ({
         source: s.source,
         total: s.total,
         correct: s.correct,
@@ -180,10 +178,7 @@ router.get("/performance", async (req, res) => {
         last7Days: parseFloat(last7Accuracy),
         last30Days: parseFloat(last30Accuracy),
         improvement: parseFloat(improvement.toFixed(2))
-      },
-      streak,
-      bestSpecialty,
-      weakestSpecialty
+      }
     });
   } catch (error: any) {
     console.error("Erro ao buscar análise de desempenho:", error);
@@ -193,13 +188,16 @@ router.get("/performance", async (req, res) => {
 
 /**
  * DELETE /api/user-answers/reset
- * Limpa todo o histórico de respostas (útil para testes)
+ * Limpa todo o histórico de respostas (requer autenticação)
  */
-router.delete("/reset", async (req, res) => {
+router.delete("/reset", authenticateToken, async (req: any, res: any) => {
   try {
-    const db = req.app.get('db');
+    const usuarioId = req.user?.id;
 
-    await db.execute(sql`DELETE FROM user_answers`);
+    await pool.query(
+      `DELETE FROM user_answers WHERE usuario_id = ?`,
+      [usuarioId]
+    );
 
     res.json({
       success: true,

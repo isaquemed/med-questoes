@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import axios from 'axios';
+import { QuestionCardSkeleton } from "./SkeletonLoader";
 
 interface Question {
   id: string;
