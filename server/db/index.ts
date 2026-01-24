@@ -19,4 +19,3 @@ export default mysql.createPool({
   keepAliveInitialDelay: 10000
 });
 
-export const db = drizzle(connection, { schema, mode: "default" });
