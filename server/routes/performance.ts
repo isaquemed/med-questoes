@@ -22,6 +22,7 @@ router.post("/save-answer", async (req: any, res) => {
       acertou: acertou,
       tempoResposta: tempo_resposta,
       tema: tema,
+      dataResposta: new Date().toISOString(),
     });
 
     // Verificar se já existe desempenho para este tema
@@ -50,7 +51,8 @@ router.post("/save-answer", async (req: any, res) => {
           totalQuestoes: novoTotal,
           acertos: novosAcertos,
           erros: novosErros,
-          taxaAcerto: novaTaxa.toString(),
+          taxaAcerto: novaTaxa.toFixed(2),
+          ultimaAtualizacao: new Date().toISOString(),
         })
         .where(eq(desempenhoTemas.id, current.id));
     } else {
@@ -62,6 +64,7 @@ router.post("/save-answer", async (req: any, res) => {
         acertos: acertou ? 1 : 0,
         erros: acertou ? 0 : 1,
         taxaAcerto: acertou ? "100.00" : "0.00",
+        ultimaAtualizacao: new Date().toISOString(),
       });
     }
 
@@ -83,9 +86,9 @@ router.get("/", async (req: any, res) => {
       .from(desempenhoTemas)
       .where(eq(desempenhoTemas.usuarioId, usuario_id));
 
-    // Calcular estatísticas gerais
-    const totalQuestoes = temas.reduce((sum, t) => sum + t.totalQuestoes, 0);
-    const totalAcertos = temas.reduce((sum, t) => sum + t.acertos, 0);
+    // Calcular estatísticas gerais - corrigindo os parâmetros
+    const totalQuestoes = temas.reduce((sum: number, t: any) => sum + t.totalQuestoes, 0);
+    const totalAcertos = temas.reduce((sum: number, t: any) => sum + t.acertos, 0);
     const taxaGeral = totalQuestoes > 0 ? (totalAcertos / totalQuestoes) * 100 : 0;
 
     // Últimas respostas
@@ -93,6 +96,7 @@ router.get("/", async (req: any, res) => {
       .select()
       .from(respostas)
       .where(eq(respostas.usuarioId, usuario_id))
+      .orderBy(respostas.dataResposta)
       .limit(10);
 
     res.json({
