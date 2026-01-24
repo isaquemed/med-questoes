@@ -1,9 +1,9 @@
+import express from "express";
 import { db } from "../db/index.js";
 import { usuarios } from "../db/schema.js";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import express from "express";
 
 const router = express.Router();
 
@@ -13,35 +13,36 @@ router.post("/register", async (req, res) => {
     const { nome, email, senha } = req.body;
 
     // Verificar se o usuário já existe
-    const [existingUsers] = await pool.execute(
-      "SELECT id FROM usuarios WHERE email = ?",
-      [email]
-    );
+    const existingUser = await db
+      .select()
+      .from(usuarios)
+      .where(eq(usuarios.email, email))
+      .limit(1);
 
-    if ((existingUsers as any[]).length > 0) {
+    if (existingUser.length > 0) {
       return res.status(400).json({ error: "E-mail já cadastrado" });
     }
 
-    // Hash da senha
     const hashedPassword = await bcrypt.hash(senha, 10);
 
     // Inserir novo usuário
-    const [result] = await pool.execute(
-      "INSERT INTO usuarios (nome, email, senha) VALUES (?, ?, ?)",
-      [nome, email, hashedPassword]
-    );
+    const [newUser] = await db.insert(usuarios).values({
+      email,
+      senha: hashedPassword,
+      nome,
+      dataCadastro: new Date().toISOString(),
+    });
 
-    // Gerar token JWT
     const token = jwt.sign(
-      { id: (result as any).insertId, email },
-      process.env.JWT_SECRET || "sua-chave-secreta-aqui",
+      { id: newUser.insertId, email },
+      process.env.JWT_SECRET || "sua-chave-secreta",
       { expiresIn: "7d" }
     );
 
     res.status(201).json({
       token,
       user: {
-        id: (result as any).insertId,
+        id: newUser.insertId,
         nome,
         email,
       },
@@ -58,16 +59,15 @@ router.post("/login", async (req, res) => {
     const { email, senha } = req.body;
 
     // Buscar usuário
-    const [users] = await pool.execute(
-      "SELECT * FROM usuarios WHERE email = ?",
-      [email]
-    );
+    const [user] = await db
+      .select()
+      .from(usuarios)
+      .where(eq(usuarios.email, email))
+      .limit(1);
 
-    if ((users as any[]).length === 0) {
+    if (!user) {
       return res.status(401).json({ error: "Credenciais inválidas" });
     }
-
-    const user = (users as any[])[0];
 
     // Verificar senha
     const validPassword = await bcrypt.compare(senha, user.senha);
@@ -78,7 +78,7 @@ router.post("/login", async (req, res) => {
     // Gerar token JWT
     const token = jwt.sign(
       { id: user.id, email: user.email },
-      process.env.JWT_SECRET || "sua-chave-secreta-aqui",
+      process.env.JWT_SECRET || "sua-chave-secreta",
       { expiresIn: "7d" }
     );
 

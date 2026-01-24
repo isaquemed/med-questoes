@@ -3,6 +3,7 @@ import { db } from "../db/index.js";
 import { respostas, desempenhoTemas } from "../db/schema.js";
 import { eq, and } from "drizzle-orm";
 import { authenticateToken } from "../middleware/auth.js";
+import { sql } from "drizzle-orm";
 
 const router = express.Router();
 
@@ -17,7 +18,7 @@ router.post("/save-answer", async (req: any, res) => {
     // Salvar resposta
     await db.insert(respostas).values({
       usuarioId: usuario_id,
-      questaoId: questao_id,
+      questaoId: questao_id.toString(), // Converta para string
       opcaoEscolhida: opcao_escolhida,
       acertou: acertou,
       tempoResposta: tempo_resposta,
@@ -40,9 +41,15 @@ router.post("/save-answer", async (req: any, res) => {
     if (existingPerformance.length > 0) {
       // Atualizar desempenho existente
       const current = existingPerformance[0];
-      const novoTotal = current.totalQuestoes + 1;
-      const novosAcertos = current.acertos + (acertou ? 1 : 0);
-      const novosErros = current.erros + (acertou ? 0 : 1);
+      
+      // Usar valores padrão se for null
+      const totalAtual = current.totalQuestoes || 0;
+      const acertosAtual = current.acertos || 0;
+      const errosAtual = current.erros || 0;
+      
+      const novoTotal = totalAtual + 1;
+      const novosAcertos = acertosAtual + (acertou ? 1 : 0);
+      const novosErros = errosAtual + (acertou ? 0 : 1);
       const novaTaxa = (novosAcertos / novoTotal) * 100;
 
       await db
@@ -86,9 +93,15 @@ router.get("/", async (req: any, res) => {
       .from(desempenhoTemas)
       .where(eq(desempenhoTemas.usuarioId, usuario_id));
 
-    // Calcular estatísticas gerais - corrigindo os parâmetros
-    const totalQuestoes = temas.reduce((sum: number, t: any) => sum + t.totalQuestoes, 0);
-    const totalAcertos = temas.reduce((sum: number, t: any) => sum + t.acertos, 0);
+    // Calcular estatísticas gerais
+    const totalQuestoes = temas.reduce(
+      (sum: number, t: any) => sum + (t.totalQuestoes || 0),
+      0
+    );
+    const totalAcertos = temas.reduce(
+      (sum: number, t: any) => sum + (t.acertos || 0),
+      0
+    );
     const taxaGeral = totalQuestoes > 0 ? (totalAcertos / totalQuestoes) * 100 : 0;
 
     // Últimas respostas
@@ -96,7 +109,7 @@ router.get("/", async (req: any, res) => {
       .select()
       .from(respostas)
       .where(eq(respostas.usuarioId, usuario_id))
-      .orderBy(respostas.dataResposta)
+      .orderBy(sql`${respostas.dataResposta} DESC`)
       .limit(10);
 
     res.json({
