@@ -5,8 +5,8 @@ import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
-import Login from "./pages/Login"; // Novo
-import Performance from "./pages/Performance"; // Novo
+import Login from "./pages/Login"; 
+import Performance from "./pages/Performance"; 
 
 function Router() {
   return (

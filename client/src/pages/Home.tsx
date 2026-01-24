@@ -670,42 +670,40 @@ fetchFilters(); fetchQuestions();;
   }
 
   if (pageState === "quiz") {
-    const currentQuestion = questions[currentIndex];
-    const currentStatus = questionStatuses[currentIndex];
+  const currentQuestion = questions[currentIndex];
+  const currentStatus = questionStatuses[currentIndex];
 
-    return (
-      <div className="min-h-screen bg-background py-4 md:py-8">
-        <div className="container max-w-7xl">
-          <div className="grid lg:grid-cols-4 gap-6">
-            <div className="lg:col-span-3 space-y-6">
-              {currentQuestion && (
-                <QuestionCard
-                  key={currentQuestion.id}
-                  question={currentQuestion}
-                  onAnswer={handleAnswer}
-                  initialAnswer={currentStatus?.selectedAnswer}
-                />
-              )}
+  return (
+    <div className="min-h-screen bg-background py-4 md:py-8">
+      <div className="container max-w-7xl">
+        <div className="grid lg:grid-cols-4 gap-6">
+          <div className="lg:col-span-3 space-y-6">
+            {currentQuestion && (
+              <QuestionCard
+                key={currentQuestion.id}
+                question={currentQuestion}
+                onAnswer={handleAnswer}
+                initialAnswer={currentStatus?.selectedAnswer}
+              />
+            )}
 
-              <div className="flex gap-4 justify-between">
+            <div className="flex gap-4 justify-between">
+              <Button
+                variant="outline"
+                onClick={() => setPageState("home")}
+              >
+                Voltar ao Início
+              </Button>
+              
+              <div className="flex gap-2">
                 <Button
                   variant="outline"
-                  onClick={() => setPageState("home")}
+                  onClick={clearHighlights}
+                  className="flex items-center gap-2"
                 >
-                  Voltar ao Início
+                  <Highlighter size={16} />
+                  Limpar Grifos
                 </Button>
-
-<div className="flex gap-2">
-    <Button
-      variant="outline"
-      onClick={clearHighlights}
-      className="flex items-center gap-2"
-    >
-      <Highlighter size={16} />
-      Limpar Grifos
-    </Button>
-
-
                 <Button
                   onClick={handleFinishQuiz}
                   className="elegant-button"
@@ -714,30 +712,31 @@ fetchFilters(); fetchQuestions();;
                 </Button>
               </div>
             </div>
+          </div>
 
-            <div className="space-y-6">
-              <QuestionNavigation
-                currentIndex={currentIndex}
-                totalQuestions={questions.length}
-                questionStatuses={questionStatuses}
-                onNavigate={handleNavigate}
-                onToggleMark={handleToggleMark}
-                onPrevious={handlePrevious}
-                onNext={handleNext}
-              />
+          <div className="space-y-6">
+            <QuestionNavigation
+              currentIndex={currentIndex}
+              totalQuestions={questions.length}
+              questionStatuses={questionStatuses}
+              onNavigate={handleNavigate}
+              onToggleMark={handleToggleMark}
+              onPrevious={handlePrevious}
+              onNext={handleNext}
+            />
 
-              <ProgressBar
-                current={currentIndex + 1}
-                total={questions.length}
-                correct={stats.correct}
-                incorrect={stats.incorrect}
-              />
-            </div>
+            <ProgressBar
+              current={currentIndex + 1}
+              total={questions.length}
+              correct={stats.correct}
+              incorrect={stats.incorrect}
+            />
           </div>
         </div>
       </div>
-    );
-  }
+    </div>
+  );
+}
 
   if (pageState === "results") {
     const totalAnswered = stats.correct + stats.incorrect;
