@@ -8,6 +8,8 @@ import filtersRoutes from "./routes/filters.js";
 import questionsRoutes from "./routes/questions.js";
 import resolutionsRoutes from "./routes/resolutions.js";
 import userAnswersRoutes from "./routes/userAnswers.js";
+import authRoutes from "./routes/auth.js";
+import performanceRoutes from "./routes/performance.js";
 
 const app = express();
 const __filename = fileURLToPath(import.meta.url);
@@ -46,11 +48,13 @@ app.use((req, res, next) => {
 });
 
 // Rotas da API
-app.use("/api/filters", filtersRoutes); // ✅ Esta linha JÁ inclui /api/filters/filtered-topics
+app.use("/api/filters", filtersRoutes); 
 app.use("/api/questions", questionsRoutes);
 app.use("/api/resolutions", resolutionsRoutes);
 app.use("/api/user-answers", userAnswersRoutes);
-// REMOVA ESTA LINHA: app.use('/api/filtered-topics', getFilteredTopics);
+app.use("/api/auth", authRoutes); 
+app.use("/api/performance", performanceRoutes); 
+
 
 // Servir arquivos estáticos
 app.use(express.static(clientBuildPath));

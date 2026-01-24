@@ -40,6 +40,41 @@ export default function Performance() {
     setLocation('/login');
   };
 
+const loadPerformance = async () => {
+  const token = localStorage.getItem("medquestoes_token");
+  const user = JSON.parse(localStorage.getItem("medquestoes_user") || "null");
+
+  if (!token || !user) {
+    setLocation("/login");
+    return;
+  }
+
+  try {
+    const response = await fetch("/api/performance", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (response.status === 401) {
+      logout();
+      return;
+    }
+
+    const data = await response.json();
+    setPerformanceData(data);
+  } catch (error) {
+    console.error("Erro ao carregar desempenho:", error);
+    // Fallback para dados locais
+    const localPerformance = localStorage.getItem("medquestoes_performance");
+    if (localPerformance) {
+      setPerformanceData(JSON.parse(localPerformance));
+    }
+  } finally {
+    setLoading(false);
+  }
+};
+
   if (loading) {
     return (
       <div className="performance-container" style={{ textAlign: 'center', padding: '4rem' }}>

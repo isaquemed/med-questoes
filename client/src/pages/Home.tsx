@@ -368,29 +368,49 @@ const handleLogout = () => {
 };
 
 // Função para salvar resposta (chame essa função quando o usuário responder)
-const saveAnswer = (isCorrect: boolean, selectedOption: string, questionId: string, tema: string) => {
+const saveAnswer = async (isCorrect: boolean, selectedOption: string, questionId: string, tema: string) => {
   if (!user) return;
-  
+
   const timeSpent = Math.floor((Date.now() - questionStartTime) / 1000);
-  
+  const token = localStorage.getItem("medquestoes_token");
+
   const answerData = {
     questao_id: questionId,
     opcao_escolhida: selectedOption,
     acertou: isCorrect,
     tempo_resposta: timeSpent,
     tema: tema,
-    data_resposta: new Date().toISOString()
   };
-  
-  // Salvar no localStorage (modo offline)
-  const userAnswers = JSON.parse(localStorage.getItem('medquestoes_answers') || '[]');
-  userAnswers.push(answerData);
-  localStorage.setItem('medquestoes_answers', JSON.stringify(userAnswers));
-  
-  // Atualizar desempenho por tema
-  updatePerformance(tema, isCorrect);
-  
-  // Reiniciar o timer para a próxima questão
+
+  try {
+    // Tentar salvar no backend
+    if (token) {
+      const response = await fetch("/api/performance/save-answer", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(answerData),
+      });
+
+      if (!response.ok) {
+        throw new Error("Erro no servidor");
+      }
+    } else {
+      throw new Error("Sem token");
+    }
+  } catch (error) {
+    // Fallback para localStorage
+    const userAnswers = JSON.parse(localStorage.getItem("medquestoes_answers") || "[]");
+    userAnswers.push({
+      ...answerData,
+      data_resposta: new Date().toISOString(),
+    });
+    localStorage.setItem("medquestoes_answers", JSON.stringify(userAnswers));
+    updatePerformance(tema, isCorrect);
+  }
+
   setQuestionStartTime(Date.now());
 };
 

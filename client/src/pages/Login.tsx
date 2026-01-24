@@ -9,88 +9,87 @@ export default function Login() {
   const [success, setSuccess] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError('');
-    setSuccess('');
-    
-    const formData = new FormData(e.currentTarget);
-    const email = formData.get('email') as string;
-    const password = formData.get('password') as string;
-    
-    try {
-      // Simulação - substituir por API real depois
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      const userData = {
-        id: Date.now(),
-        email,
-        name: email.split('@')[0],
-        token: 'mock-jwt-token-' + Date.now()
-      };
-      
-      localStorage.setItem('medquestoes_user', JSON.stringify(userData));
-      localStorage.setItem('medquestoes_token', userData.token);
-      
-      setSuccess('Login realizado com sucesso!');
-      setTimeout(() => {
-        setLocation('/');
-      }, 1500);
-    } catch (err) {
-      setError('Erro ao fazer login. Verifique suas credenciais.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
+  e.preventDefault();
+  setIsLoading(true);
+  setError("");
+  setSuccess("");
 
-  const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError('');
-    setSuccess('');
-    
-    const formData = new FormData(e.currentTarget);
-    const name = formData.get('name') as string;
-    const email = formData.get('email') as string;
-    const password = formData.get('password') as string;
-    const confirmPassword = formData.get('confirmPassword') as string;
-    
-    if (password !== confirmPassword) {
-      setError('As senhas não coincidem');
-      setIsLoading(false);
-      return;
+  const formData = new FormData(e.currentTarget);
+  const email = formData.get("email") as string;
+  const password = formData.get("password") as string;
+
+  try {
+    const response = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, senha: password }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Erro ao fazer login");
     }
-    
-    if (password.length < 6) {
-      setError('A senha deve ter no mínimo 6 caracteres');
-      setIsLoading(false);
-      return;
+
+    localStorage.setItem("medquestoes_user", JSON.stringify(data.user));
+    localStorage.setItem("medquestoes_token", data.token);
+
+    setSuccess("Login realizado com sucesso!");
+    setTimeout(() => {
+      setLocation("/");
+    }, 1500);
+  } catch (err: any) {
+    setError(err.message);
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
+  e.preventDefault();
+  setIsLoading(true);
+  setError("");
+  setSuccess("");
+
+  const formData = new FormData(e.currentTarget);
+  const name = formData.get("name") as string;
+  const email = formData.get("email") as string;
+  const password = formData.get("password") as string;
+  const confirmPassword = formData.get("confirmPassword") as string;
+
+  if (password !== confirmPassword) {
+    setError("As senhas não coincidem");
+    setIsLoading(false);
+    return;
+  }
+
+  try {
+    const response = await fetch("/api/auth/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ nome: name, email, senha: password }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Erro ao cadastrar");
     }
-    
-    try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      const userData = {
-        id: Date.now(),
-        email,
-        name,
-        token: 'mock-jwt-token-' + Date.now()
-      };
-      
-      localStorage.setItem('medquestoes_user', JSON.stringify(userData));
-      localStorage.setItem('medquestoes_token', userData.token);
-      
-      setSuccess('Cadastro realizado com sucesso!');
-      setTimeout(() => {
-        setLocation('/');
-      }, 1500);
-    } catch (err) {
-      setError('Erro ao cadastrar. Tente novamente.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+
+    localStorage.setItem("medquestoes_user", JSON.stringify(data.user));
+    localStorage.setItem("medquestoes_token", data.token);
+
+    setSuccess("Cadastro realizado com sucesso!");
+    setTimeout(() => {
+      setLocation("/");
+    }, 1500);
+  } catch (err: any) {
+    setError(err.message);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   return (
     <div className="auth-page-container">
