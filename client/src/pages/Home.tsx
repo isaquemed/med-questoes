@@ -9,6 +9,8 @@ import { Heart, Brain, Stethoscope, Filter, LayoutDashboard, BookOpen, ListCheck
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { questionsApi } from "@/lib/api";
 import "@/styles/emed.css";
+import { useLocation } from "wouter";
+import { LogIn, User, BarChart3, LogOut, Highlighter } from "lucide-react";
 
 export interface Question {
   id: string;
@@ -44,11 +46,67 @@ export default function Home() {
   const [availableFilters, setAvailableFilters] = useState({ sources: [], years: [], specialties: [], topics: [] });
   const [totalQuestionsCount, setTotalQuestionsCount] = useState(0);
   const [loading, setLoading] = useState(false);
+  // Estados para usuário e grifos
+const [, setLocation] = useLocation();
+const [user, setUser] = useState(() => {
+  const saved = localStorage.getItem("medquestoes_user");
+  return saved ? JSON.parse(saved) : null;
+});
+const [highlightsEnabled, setHighlightsEnabled] = useState(true);
+const [questionStartTime, setQuestionStartTime] = useState(Date.now());
 
   useEffect(() => {
     fetchFilters();
     fetchQuestions();
   }, []);
+
+
+// Efeito para a funcionalidade de grifar
+useEffect(() => {
+  if (!highlightsEnabled) return;
+
+  const handleMouseUp = () => {
+    const selection = window.getSelection();
+    const selectedText = selection?.toString().trim();
+    
+    if (selectedText && selectedText.length > 0) {
+      const range = selection?.getRangeAt(0);
+      if (!range) return;
+      
+      const selectedNode = range.startContainer.parentNode;
+      
+      if (selectedNode instanceof HTMLElement && selectedNode.classList.contains('highlighted')) {
+        // Desgrifar
+        const parent = selectedNode.parentNode;
+        if (parent) {
+          while (selectedNode.firstChild) {
+            parent.insertBefore(selectedNode.firstChild, selectedNode);
+          }
+          parent.removeChild(selectedNode);
+          normalize(parent);
+        }
+      } else {
+        // Grifar
+        const span = document.createElement('span');
+        span.className = 'highlighted';
+        
+        try {
+          range.surroundContents(span);
+        } catch(e) {
+          // Fallback para seleções complexas
+          const contents = range.extractContents();
+          span.appendChild(contents);
+          range.insertNode(span);
+        }
+      }
+      
+      selection?.removeAllRanges();
+    }
+  };
+
+  document.addEventListener('mouseup', handleMouseUp);
+  return () => document.removeEventListener('mouseup', handleMouseUp);
+}, [highlightsEnabled]);
 
   // Atalhos de teclado
   useEffect(() => {
@@ -221,24 +279,31 @@ export default function Home() {
 };
 
   const handleAnswer = (selectedAnswer: string, isCorrect: boolean) => {
-    // Atualizar estatísticas
-    setStats((prev) => ({
-      correct: prev.correct + (isCorrect ? 1 : 0),
-      incorrect: prev.incorrect + (isCorrect ? 0 : 1),
-    }));
+  // Salvar a resposta se o usuário estiver logado
+  if (user) {
+    // Obter o tema da questão atual (ajuste conforme sua estrutura)
+    const tema = questions[currentIndex]?.specialty || "Geral";
+    saveAnswer(isCorrect, selectedAnswer, questions[currentIndex].id, tema);
+  }
 
-    // Atualizar status da questão
-    setQuestionStatuses((prev) => {
-      const newStatuses = [...prev];
-      newStatuses[currentIndex] = {
-        ...newStatuses[currentIndex],
-        answered: true,
-        correct: isCorrect,
-        selectedAnswer: selectedAnswer,
-      };
-      return newStatuses;
-    });
-  };
+  // Atualizar estatísticas
+  setStats((prev) => ({
+    correct: prev.correct + (isCorrect ? 1 : 0),
+    incorrect: prev.incorrect + (isCorrect ? 0 : 1),
+  }));
+
+  // Atualizar status da questão
+  setQuestionStatuses((prev) => {
+    const newStatuses = [...prev];
+    newStatuses[currentIndex] = {
+      ...newStatuses[currentIndex],
+      answered: true,
+      correct: isCorrect,
+      selectedAnswer: selectedAnswer,
+    };
+    return newStatuses;
+  });
+};
 
   const handleNavigate = useCallback((index: number) => {
     setCurrentIndex(index);
@@ -270,6 +335,93 @@ export default function Home() {
   const handleFinishQuiz = () => {
     setPageState("results");
   };
+
+// ======================================
+// FUNÇÕES PARA GRIFAR TEXTO
+// ======================================
+
+const normalize = (element: any) => {
+  element.normalize();
+};
+
+const clearHighlights = () => {
+  document.querySelectorAll('.highlighted').forEach(el => {
+    const parent = el.parentNode;
+    if (parent) {
+      while (el.firstChild) {
+        parent.insertBefore(el.firstChild, el);
+      }
+      parent.removeChild(el);
+      normalize(parent);
+    }
+  });
+};
+
+// ======================================
+// FUNÇÕES PARA USUÁRIO E SALVAR RESPOSTAS
+// ======================================
+
+const handleLogout = () => {
+  setUser(null);
+  localStorage.removeItem('medquestoes_user');
+  localStorage.removeItem('medquestoes_token');
+};
+
+// Função para salvar resposta (chame essa função quando o usuário responder)
+const saveAnswer = (isCorrect: boolean, selectedOption: string, questionId: string, tema: string) => {
+  if (!user) return;
+  
+  const timeSpent = Math.floor((Date.now() - questionStartTime) / 1000);
+  
+  const answerData = {
+    questao_id: questionId,
+    opcao_escolhida: selectedOption,
+    acertou: isCorrect,
+    tempo_resposta: timeSpent,
+    tema: tema,
+    data_resposta: new Date().toISOString()
+  };
+  
+  // Salvar no localStorage (modo offline)
+  const userAnswers = JSON.parse(localStorage.getItem('medquestoes_answers') || '[]');
+  userAnswers.push(answerData);
+  localStorage.setItem('medquestoes_answers', JSON.stringify(userAnswers));
+  
+  // Atualizar desempenho por tema
+  updatePerformance(tema, isCorrect);
+  
+  // Reiniciar o timer para a próxima questão
+  setQuestionStartTime(Date.now());
+};
+
+const updatePerformance = (tema: string, acertou: boolean) => {
+  let performance = JSON.parse(localStorage.getItem('medquestoes_performance') || '[]');
+  
+  let temaIndex = performance.findIndex((p: any) => p.tema === tema);
+  
+  if (temaIndex === -1) {
+    performance.push({
+      tema: tema,
+      totalQuestoes: 0,
+      acertos: 0,
+      erros: 0,
+      taxaAcerto: 0
+    });
+    temaIndex = performance.length - 1;
+  }
+  
+  performance[temaIndex].totalQuestoes += 1;
+  if (acertou) {
+    performance[temaIndex].acertos += 1;
+  } else {
+    performance[temaIndex].erros += 1;
+  }
+  
+  performance[temaIndex].taxaAcerto = 
+    (performance[temaIndex].acertos / performance[temaIndex].totalQuestoes) * 100;
+  
+  localStorage.setItem('medquestoes_performance', JSON.stringify(performance));
+};
 
   const handleRestart = () => {
     setPageState("home");
@@ -310,6 +462,45 @@ export default function Home() {
         </aside>
 
         <main className="emed-main">
+  {/* Painel do usuário */}
+  {user && (
+    <div className="user-info-panel">
+      <div className="flex items-center gap-2">
+        <User size={16} />
+        <span className="text-sm font-medium">Olá, {user.name}</span>
+      </div>
+      <div className="flex items-center gap-2">
+        <button
+          onClick={() => setLocation('/performance')}
+          className="user-action-link flex items-center gap-1"
+        >
+          <BarChart3 size={14} />
+          Desempenho
+        </button>
+        <button
+          onClick={handleLogout}
+          className="user-action-link text-destructive flex items-center gap-1"
+        >
+          <LogOut size={14} />
+          Sair
+        </button>
+      </div>
+    </div>
+  )}
+  
+  {!user && (
+    <div className="user-info-panel">
+      <button
+        onClick={() => setLocation('/login')}
+        className="user-action-link flex items-center gap-2"
+      >
+        <LogIn size={16} />
+        Entrar / Cadastrar
+      </button>
+    </div>
+  )}
+  
+
           <div className="max-w-6xl mx-auto space-y-8">
             <header className="flex justify-between items-end">
               <div>
@@ -483,6 +674,18 @@ fetchFilters(); fetchQuestions();;
                 >
                   Voltar ao Início
                 </Button>
+
+<div className="flex gap-2">
+    <Button
+      variant="outline"
+      onClick={clearHighlights}
+      className="flex items-center gap-2"
+    >
+      <Highlighter size={16} />
+      Limpar Grifos
+    </Button>
+
+
                 <Button
                   onClick={handleFinishQuiz}
                   className="elegant-button"
