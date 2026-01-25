@@ -76,6 +76,12 @@ export default function Home() {
         const range = selection?.getRangeAt(0);
         if (!range) return;
         
+        // Verificar se a seleção está dentro do container da questão
+        const questionContainer = document.querySelector('.question-content-container');
+        if (!questionContainer || !questionContainer.contains(range.commonAncestorContainer)) {
+          return;
+        }
+        
         const selectedNode = range.startContainer.parentNode;
         
         if (selectedNode instanceof HTMLElement && selectedNode.classList.contains('highlighted')) {
@@ -103,18 +109,15 @@ export default function Home() {
         }
         
         // Salvar o estado atual do HTML da questão como grifos
-        const questionContainer = document.querySelector('.prose-blue');
-        if (questionContainer) {
-          const currentHighlights = questionContainer.innerHTML;
-          setQuestionStatuses(prev => {
-            const newStatuses = [...prev];
-            newStatuses[currentIndex] = {
-              ...newStatuses[currentIndex],
-              highlights: currentHighlights
-            };
-            return newStatuses;
-          });
-        }
+        const currentHighlights = questionContainer.innerHTML;
+        setQuestionStatuses(prev => {
+          const newStatuses = [...prev];
+          newStatuses[currentIndex] = {
+            ...newStatuses[currentIndex],
+            highlights: currentHighlights
+          };
+          return newStatuses;
+        });
         
         selection?.removeAllRanges();
       }
@@ -317,7 +320,7 @@ export default function Home() {
   };
 
   const clearHighlights = () => {
-    const questionContainer = document.querySelector('.prose-blue');
+    const questionContainer = document.querySelector('.question-content-container');
     if (questionContainer) {
       // Remove all spans with class 'highlighted' but keep their text
       const highlights = questionContainer.querySelectorAll('.highlighted');
@@ -536,7 +539,7 @@ export default function Home() {
 
     return (
       <div className="min-h-screen bg-[#f8fafc] py-8">
-        <div className="max-w-7xl auto px-4">
+        <div className="max-w-7xl mx-auto px-4">
           <div className="grid lg:grid-cols-4 gap-8">
             <div className="lg:col-span-3 space-y-6">
               <div className="flex items-center justify-between bg-white p-4 rounded-xl shadow-sm border-l-4 border-l-[#d4af37]">
@@ -554,12 +557,17 @@ export default function Home() {
               </div>
 
               {currentQuestion && (
-                <QuestionCard
-                  key={currentQuestion.id}
-                  question={currentQuestion}
-                  onAnswer={handleAnswer}
-                  initialAnswer={currentStatus?.selectedAnswer}
-                />
+                <div className="question-content-container">
+                  <QuestionCard
+                    key={currentQuestion.id}
+                    question={{
+                      ...currentQuestion,
+                      highlights: currentStatus?.highlights
+                    }}
+                    onAnswer={handleAnswer}
+                    initialAnswer={currentStatus?.selectedAnswer}
+                  />
+                </div>
               )}
             </div>
 
