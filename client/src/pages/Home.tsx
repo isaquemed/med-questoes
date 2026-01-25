@@ -489,11 +489,11 @@ const updatePerformance = (tema: string, acertou: boolean) => {
 
         <main className="emed-main">
   {/* Painel do usuário */}
-  {user && (
+  {user ? (
     <div className="user-info-panel">
       <div className="flex items-center gap-2">
         <User size={16} />
-        <span className="text-sm font-medium">Olá, {user.name}</span>
+        <span className="text-sm font-medium">Olá, {user.nome || user.name}</span>
       </div>
       <div className="flex items-center gap-2">
         <button
@@ -518,6 +518,20 @@ const updatePerformance = (tema: string, acertou: boolean) => {
           Sair
         </button>
       </div>
+    </div>
+  ) : (
+    <div className="user-info-panel">
+      <div className="flex items-center gap-2">
+        <User size={16} className="text-gray-400" />
+        <span className="text-sm font-medium text-gray-500">Acesse sua conta para salvar seu progresso</span>
+      </div>
+      <button
+        onClick={() => setLocation('/login')}
+        className="user-action-link flex items-center gap-1 font-bold text-[#002b5c]"
+      >
+        <LogIn size={14} />
+        Entrar / Cadastrar
+      </button>
     </div>
   )}
   
