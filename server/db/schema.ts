@@ -28,6 +28,7 @@ export const alternatives = mysqlTable("alternatives", {
 
 export const markedQuestions = mysqlTable("marked_questions", {
   id: serial("id").primaryKey(),
+  usuarioId: int("usuario_id"),
   questionId: int("question_id").notNull(),
   markedAt: int("marked_at").notNull(),
 });
@@ -46,6 +47,23 @@ export const usuarios = mysqlTable("usuarios", {
   dataCadastro: datetime("data_cadastro").default(sql`CURRENT_TIMESTAMP`),
 });
 
+export const userAnswers = mysqlTable("user_answers", {
+  id: serial("id").primaryKey(),
+  usuarioId: int("usuario_id"), 
+  questionId: int("question_id").notNull(),
+  selectedAnswer: varchar("selected_answer", { length: 1 }).notNull(),
+  isCorrect: int("is_correct").notNull(),
+  answeredAt: int("answered_at").notNull(),
+  tempoResposta: int("tempo_resposta"),
+  tema: varchar("tema", { length: 100 }),
+  highlights: text("highlights"), // Novo campo para salvar grifos
+}, (table) => ({
+  usuarioIdIdx: index("ua_usuario_id_idx").on(table.usuarioId),
+  questionIdIdx: index("ua_question_id_idx").on(table.questionId),
+}));
+
+// Mantendo 'respostas' e 'desempenho_temas' para compatibilidade se necessário, 
+// mas focaremos em 'user_answers' para o novo dashboard.
 export const respostas = mysqlTable("respostas", {
   id: serial("id").primaryKey(),
   usuarioId: int("usuario_id").notNull(),
@@ -55,10 +73,7 @@ export const respostas = mysqlTable("respostas", {
   tempoResposta: int("tempo_resposta"),
   tema: varchar("tema", { length: 100 }),
   dataResposta: datetime("data_resposta").default(sql`CURRENT_TIMESTAMP`),
-}, (table) => ({
-  usuarioIdIdx: index("resp_usuario_id_idx").on(table.usuarioId),
-  questaoIdIdx: index("resp_questao_id_idx").on(table.questaoId),
-}));
+});
 
 export const desempenhoTemas = mysqlTable("desempenho_temas", {
   id: serial("id").primaryKey(),
@@ -70,17 +85,3 @@ export const desempenhoTemas = mysqlTable("desempenho_temas", {
   taxaAcerto: decimal("taxa_acerto", { precision: 5, scale: 2 }).default("0.00"),
   ultimaAtualizacao: datetime("ultima_atualizacao").default(sql`CURRENT_TIMESTAMP`),
 });
-
-
-export const userAnswers = mysqlTable("user_answers", {
-  id: serial("id").primaryKey(),
-  usuarioId: int("usuario_id"), 
-  questionId: int("question_id").notNull(),
-  selectedAnswer: varchar("selected_answer", { length: 1 }).notNull(),
-  isCorrect: int("is_correct").notNull(),
-  answeredAt: int("answered_at").notNull(),
-  // Adicione campos para performance se quiser
-  tempoResposta: int("tempo_resposta"),
-  tema: varchar("tema", { length: 100 }),
-});
-

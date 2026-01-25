@@ -1,5 +1,5 @@
 import { Router } from "express";
-import pool from "../db/index.js";
+import { pool } from "../db/index.js";
 import { difyService } from "../services/difyService.js";
 const router = Router();
 router.post('/generate', async (req, res) => {
@@ -9,7 +9,7 @@ router.post('/generate', async (req, res) => {
             return res.status(400).json({ message: 'Missing questionId or questionText' });
         }
         // 1. Verifica se já existe uma resolução no banco
-        const [existingResolutions] = await pool.query("SELECT resolution FROM resolutions WHERE question_id = ? ORDER BY created_at DESC LIMIT 1", [questionId]);
+        const [existingResolutions] = await pool.query("SELECT resolution FROM resolutions WHERE question_id = ? LIMIT 1", [questionId]);
         if (existingResolutions.length > 0) {
             console.log(`📋 Resolução já existe, retornando do banco`);
             return res.json({ resolution: existingResolutions[0].resolution });
@@ -43,13 +43,12 @@ ${questionText}
     }
     catch (error) {
         console.error('❌ Erro ao gerar resolução:', error);
-        // CORREÇÃO TYPESCRIPT: Tratar erro como unknown
         const errorMessage = error instanceof Error
             ? error.message
             : 'Erro desconhecido ao gerar resolução';
         return res.status(500).json({
             message: 'Error generating resolution',
-            details: errorMessage // Agora é string, não unknown
+            details: errorMessage
         });
     }
 });

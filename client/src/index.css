@@ -48,56 +48,56 @@
 }
 
 :root {
-  /* Elegant Medical Contemporary Palette */
-  --primary: #0d9488;
-  --primary-foreground: #faf8f3;
-  --sidebar-primary: #0d9488;
-  --sidebar-primary-foreground: #faf8f3;
+  /* Med-Questoes Palette: Azul Marinho e Dourado */
+  --primary: #002b5c;
+  --primary-foreground: #ffffff;
+  --sidebar-primary: #002b5c;
+  --sidebar-primary-foreground: #ffffff;
   --accent: #d4af37;
-  --accent-foreground: #0d9488;
-  --chart-1: #0d9488;
-  --chart-2: #14b8a6;
-  --chart-3: #2dd4bf;
-  --chart-4: #67e8f9;
-  --chart-5: #a5f3fc;
+  --accent-foreground: #002b5c;
+  --chart-1: #002b5c;
+  --chart-2: #d4af37;
+  --chart-3: #1e40af;
+  --chart-4: #fbbf24;
+  --chart-5: #3b82f6;
   --radius: 0.75rem;
-  --background: #faf8f3;
-  --foreground: #1f2937;
+  --background: #f8fafc;
+  --foreground: #0f172a;
   --card: #ffffff;
-  --card-foreground: #1f2937;
+  --card-foreground: #0f172a;
   --popover: #ffffff;
-  --popover-foreground: #1f2937;
-  --secondary: #f3f4f6;
-  --secondary-foreground: #374151;
-  --muted: #e5e7eb;
-  --muted-foreground: #6b7280;
+  --popover-foreground: #0f172a;
+  --secondary: #f1f5f9;
+  --secondary-foreground: #1e293b;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
   --destructive: #ef4444;
-  --destructive-foreground: #faf8f3;
-  --border: #e5e7eb;
-  --input: #f3f4f6;
-  --ring: #0d9488;
-  --sidebar: #faf8f3;
-  --sidebar-foreground: #1f2937;
-  --sidebar-accent: #f3f4f6;
-  --sidebar-accent-foreground: #0d9488;
-  --sidebar-border: #e5e7eb;
-  --sidebar-ring: #0d9488;
+  --destructive-foreground: #ffffff;
+  --border: #e2e8f0;
+  --input: #f1f5f9;
+  --ring: #002b5c;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #0f172a;
+  --sidebar-accent: #f1f5f9;
+  --sidebar-accent-foreground: #002b5c;
+  --sidebar-border: #e2e8f0;
+  --sidebar-ring: #002b5c;
   --success: #10b981;
   --warning: #f59e0b;
   --error: #ef4444;
 }
 
 .dark {
-  --primary: #14b8a6;
+  --primary: #3b82f6;
   --primary-foreground: #0f172a;
-  --sidebar-primary: #0d9488;
+  --sidebar-primary: #3b82f6;
   --sidebar-primary-foreground: #f0fdfa;
   --background: #0f172a;
-  --foreground: #f0fdfa;
+  --foreground: #f8fafc;
   --card: #1e293b;
-  --card-foreground: #f0fdfa;
+  --card-foreground: #f8fafc;
   --popover: #1e293b;
-  --popover-foreground: #f0fdfa;
+  --popover-foreground: #f8fafc;
   --secondary: #334155;
   --secondary-foreground: #cbd5e1;
   --muted: #475569;
@@ -108,18 +108,18 @@
   --destructive-foreground: #0f172a;
   --border: #334155;
   --input: #1e293b;
-  --ring: #14b8a6;
-  --chart-1: #14b8a6;
-  --chart-2: #2dd4bf;
-  --chart-3: #67e8f9;
-  --chart-4: #a5f3fc;
-  --chart-5: #cffafe;
+  --ring: #3b82f6;
+  --chart-1: #3b82f6;
+  --chart-2: #d4af37;
+  --chart-3: #60a5fa;
+  --chart-4: #fbbf24;
+  --chart-5: #93c5fd;
   --sidebar: #1e293b;
-  --sidebar-foreground: #f0fdfa;
+  --sidebar-foreground: #f8fafc;
   --sidebar-accent: #334155;
-  --sidebar-accent-foreground: #f0fdfa;
+  --sidebar-accent-foreground: #f8fafc;
   --sidebar-border: #334155;
-  --sidebar-ring: #14b8a6;
+  --sidebar-ring: #3b82f6;
 }
 
 .custom-scrollbar::-webkit-scrollbar {
@@ -145,10 +145,9 @@
   }
   body {
     @apply bg-background text-foreground font-sans;
-    font-family: 'Lato', sans-serif;
+    font-family: 'Inter', sans-serif;
   }
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Playfair Display', serif;
     font-weight: 700;
   }
   button:not(:disabled),
@@ -212,17 +211,17 @@
 /* =========================== */
 
 .highlighted {
-  background-color: rgba(255, 235, 59, 0.4) !important;
+  background-color: rgba(212, 175, 55, 0.3) !important; /* Dourado suave */
   cursor: pointer;
   transition: background-color 0.2s;
   border-radius: 0.125rem;
   padding: 0 0.125rem;
   margin: 0 -0.125rem;
-  box-shadow: 0 0 0 1px rgba(255, 235, 59, 0.3);
+  box-shadow: 0 0 0 1px rgba(212, 175, 55, 0.2);
 }
 
 .highlighted:hover {
-  background-color: rgba(255, 235, 59, 0.6) !important;
+  background-color: rgba(212, 175, 55, 0.5) !important;
 }
 
 /* Botão de limpar grifos - usando suas variáveis */

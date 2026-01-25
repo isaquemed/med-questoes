@@ -5,7 +5,6 @@ import { useState, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import axios from 'axios';
-import { QuestionCardSkeleton } from "./SkeletonLoader";
 
 interface Question {
   id: string;
@@ -19,6 +18,7 @@ interface Question {
   year?: number;
   specialty?: string;
   resolution?: string;
+  highlights?: string; // Adicionado suporte a grifos salvos
 }
 
 interface QuestionCardProps {
@@ -82,15 +82,15 @@ export function QuestionCard({
   };
 
   return (
-    <Card className="elegant-card p-8 space-y-6">
+    <Card className="elegant-card p-8 space-y-6 border-t-4 border-t-[#d4af37]">
       {/* Header */}
-      <div className="space-y-2 border-b-2 border-accent pb-4">
+      <div className="space-y-2 border-b border-gray-100 pb-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-foreground">
+          <h2 className="text-xl font-bold text-[#002b5c]">
             {question.source && `[${question.source}${question.year ? ` - ${question.year}` : ""}]`}
           </h2>
           {question.specialty && (
-            <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
+            <span className="px-3 py-1 bg-[#002b5c]/10 text-[#002b5c] rounded-full text-xs font-bold uppercase tracking-wider">
               {question.specialty}
             </span>
           )}
@@ -100,35 +100,37 @@ export function QuestionCard({
       {/* Question Text */}
       <div className="space-y-4">
         <div className="prose prose-blue max-w-none">
-          <ReactMarkdown
-            remarkPlugins={[remarkGfm]}
-            components={{
-              p: ({ children }) => (
-                <p className="text-lg leading-relaxed text-foreground mb-4">
-                  {children}
-                </p>
-              ),
-              strong: ({ children }) => (
-                <strong className="font-bold text-foreground">{children}</strong>
-              ),
-              em: ({ children }) => (
-                <em className="italic text-foreground">{children}</em>
-              ),
-              ul: ({ children }) => (
-                <ul className="list-disc list-inside space-y-2 my-4">{children}</ul>
-              ),
-              ol: ({ children }) => (
-                <ol className="list-decimal list-inside space-y-2 my-4">{children}</ol>
-              ),
-              code: ({ children }) => (
-                <code className="bg-gray-100 px-2 py-1 rounded text-sm font-mono">
-                  {children}
-                </code>
-              ),
-            }}
-          >
-            {processText(question.question)}
-          </ReactMarkdown>
+          {question.highlights ? (
+            <div 
+              className="text-lg leading-relaxed text-foreground mb-4"
+              dangerouslySetInnerHTML={{ __html: question.highlights }}
+            />
+          ) : (
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              components={{
+                p: ({ children }) => (
+                  <p className="text-lg leading-relaxed text-foreground mb-4">
+                    {children}
+                  </p>
+                ),
+                strong: ({ children }) => (
+                  <strong className="font-bold text-[#002b5c]">{children}</strong>
+                ),
+                em: ({ children }) => (
+                  <em className="italic text-foreground">{children}</em>
+                ),
+                ul: ({ children }) => (
+                  <ul className="list-disc list-inside space-y-2 my-4">{children}</ul>
+                ),
+                ol: ({ children }) => (
+                  <ol className="list-decimal list-inside space-y-2 my-4">{children}</ol>
+                ),
+              }}
+            >
+              {processText(question.question)}
+            </ReactMarkdown>
+          )}
         </div>
       </div>
 
@@ -146,42 +148,34 @@ export function QuestionCard({
               onClick={() => handleSelectAnswer(alt.letter)}
               disabled={disabled || showResult}
               className={`
-                w-full p-4 rounded-lg border-2 text-left transition-all
+                w-full p-5 rounded-xl border-2 text-left transition-all duration-200
                 ${
                   isSelected
                     ? showCorrect
-                      ? "border-green-500 bg-green-50"
+                      ? "border-green-500 bg-green-50 shadow-sm"
                       : showIncorrect
-                        ? "border-red-500 bg-red-50"
-                        : "border-primary bg-blue-50"
+                        ? "border-red-500 bg-red-50 shadow-sm"
+                        : "border-[#002b5c] bg-[#002b5c]/5 shadow-md"
                     : showCorrect
                       ? "border-green-500 bg-green-50"
-                      : "border-border hover:border-primary hover:bg-secondary"
+                      : "border-gray-100 hover:border-[#002b5c]/30 hover:bg-gray-50"
                 }
                 ${disabled || showResult ? "cursor-not-allowed" : "cursor-pointer"}
               `}
             >
               <div className="flex items-start gap-4">
-                <span className="font-bold text-lg min-w-8 pt-1">
-                  {alt.letter})
+                <span className={`
+                  font-bold text-lg min-w-8 h-8 flex items-center justify-center rounded-full
+                  ${isSelected ? "bg-[#002b5c] text-white" : "bg-gray-100 text-gray-500"}
+                `}>
+                  {alt.letter}
                 </span>
-                <div className="flex-1 prose prose-sm max-w-none">
+                <div className="flex-1 pt-0.5">
                   <ReactMarkdown
                     remarkPlugins={[remarkGfm]}
                     components={{
                       p: ({ children }) => (
-                        <span className="text-foreground">{children}</span>
-                      ),
-                      strong: ({ children }) => (
-                        <strong className="font-bold">{children}</strong>
-                      ),
-                      em: ({ children }) => (
-                        <em className="italic">{children}</em>
-                      ),
-                      code: ({ children }) => (
-                        <code className="bg-gray-200 px-1 rounded text-xs font-mono">
-                          {children}
-                        </code>
+                        <span className="text-gray-700 font-medium">{children}</span>
                       ),
                     }}
                   >
@@ -202,56 +196,41 @@ export function QuestionCard({
 
       {/* Result Message and Resolution */}
       {showResult && (
-        <div className="space-y-4">
+        <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
           <div
             className={`
-              p-4 rounded-lg text-center font-semibold
-              ${isCorrect ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}
+              p-4 rounded-xl text-center font-bold text-lg
+              ${isCorrect ? "bg-green-100 text-green-800 border border-green-200" : "bg-red-100 text-red-800 border border-red-200"}
             `}
           >
             {isCorrect ? "✓ Resposta Correta!" : "✗ Resposta Incorreta"}
             {!isCorrect && (
-              <p className="text-sm mt-2">
-                A resposta correta é: <strong>{question.correctAnswer})</strong>
+              <p className="text-sm mt-2 font-medium">
+                A alternativa correta é a <strong>{question.correctAnswer}</strong>
               </p>
             )}
           </div>
 
           {/* Bloco da Resolução Comentada */}
           {localResolution ? (
-            <div className="p-6 bg-blue-50 border-l-4 border-blue-500 rounded-r-lg">
-              <h3 className="font-bold text-blue-800 mb-3 flex items-center gap-2 text-lg">
-                <Lightbulb className="w-5 h-5" /> Resolução Comentada
+            <div className="p-8 bg-[#002b5c]/5 border-l-4 border-[#d4af37] rounded-r-xl">
+              <h3 className="font-bold text-[#002b5c] mb-4 flex items-center gap-2 text-xl">
+                <Lightbulb className="w-6 h-6 text-[#d4af37]" /> Resolução Comentada
               </h3>
               <div className="prose prose-blue max-w-none">
                 <ReactMarkdown
                   remarkPlugins={[remarkGfm]}
                   components={{
                     p: ({ children }) => (
-                      <p className="text-blue-900 leading-relaxed mb-3">{children}</p>
+                      <p className="text-gray-700 leading-relaxed mb-4">{children}</p>
                     ),
                     strong: ({ children }) => (
-                      <strong className="font-bold text-blue-950">{children}</strong>
+                      <strong className="font-bold text-[#002b5c]">{children}</strong>
                     ),
                     ul: ({ children }) => (
-                      <ul className="list-disc list-inside space-y-1 my-3 text-blue-900">
+                      <ul className="list-disc list-inside space-y-2 my-4 text-gray-700">
                         {children}
                       </ul>
-                    ),
-                    ol: ({ children }) => (
-                      <ol className="list-decimal list-inside space-y-1 my-3 text-blue-900">
-                        {children}
-                      </ol>
-                    ),
-                    blockquote: ({ children }) => (
-                      <blockquote className="border-l-4 border-blue-400 pl-4 italic my-3 text-blue-800">
-                        {children}
-                      </blockquote>
-                    ),
-                    code: ({ children }) => (
-                      <code className="bg-blue-100 px-2 py-1 rounded text-sm font-mono">
-                        {children}
-                      </code>
                     ),
                   }}
                 >
@@ -260,21 +239,21 @@ export function QuestionCard({
               </div>
             </div>
           ) : (
-            <div className="p-6 bg-amber-50 border-l-4 border-amber-500 rounded-r-lg flex flex-col items-center gap-4">
+            <div className="p-8 bg-amber-50 border-l-4 border-amber-500 rounded-r-xl flex flex-col items-center gap-4">
               <div className="text-center">
-                <h3 className="font-bold text-amber-800 mb-1 flex items-center justify-center gap-2">
-                  <AlertTriangle className="w-5 h-5" /> Resolução não encontrada
+                <h3 className="font-bold text-amber-800 mb-2 flex items-center justify-center gap-2 text-lg">
+                  <AlertTriangle className="w-6 h-6" /> Resolução não disponível
                 </h3>
-                <p className="text-amber-900 text-sm">
+                <p className="text-amber-900 font-medium">
                   Deseja que nossa IA gere uma explicação detalhada agora?
                 </p>
               </div>
               <Button 
                 onClick={handleGenerateAI} 
                 disabled={isGenerating}
-                className="bg-amber-600 hover:bg-amber-700 text-white"
+                className="bg-[#d4af37] hover:bg-[#b8962d] text-[#002b5c] font-bold px-8 py-6 rounded-xl"
               >
-                {isGenerating ? "IA pensando..." : "Gerar Resolução com IA"}
+                {isGenerating ? "IA Analisando..." : "Gerar Resolução com IA"}
               </Button>
             </div>
           )}
@@ -286,7 +265,7 @@ export function QuestionCard({
         <Button
           onClick={handleSubmit}
           disabled={!selectedAnswer || disabled}
-          className="w-full elegant-button"
+          className="w-full py-8 text-xl font-bold bg-[#002b5c] hover:bg-[#001a3a] rounded-xl shadow-lg transition-all active:scale-[0.98]"
         >
           Confirmar Resposta
         </Button>

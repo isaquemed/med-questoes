@@ -1,14 +1,14 @@
-import express from "express";
-import pool from "../db/index.js";
+import { Router } from "express";
+import { pool } from "../db/index.js";
 import { authenticateToken } from "../middleware/auth.js";
-const router = express.Router();
+const router = Router();
 /**
  * POST /api/user-answers
  * Registra uma resposta do usuário (requer autenticação)
  */
 router.post("/", authenticateToken, async (req, res) => {
     try {
-        const { questionId, selectedAnswer, isCorrect, tempoResposta, tema } = req.body;
+        const { questionId, selectedAnswer, isCorrect, tempoResposta, tema, highlights } = req.body;
         const usuarioId = req.user?.id;
         if (!questionId || !selectedAnswer || isCorrect === undefined) {
             return res.status(400).json({
@@ -17,8 +17,8 @@ router.post("/", authenticateToken, async (req, res) => {
         }
         const answeredAt = Math.floor(Date.now() / 1000);
         // Usar raw query para inserir
-        const [result] = await pool.query(`INSERT INTO user_answers (usuario_id, question_id, selected_answer, is_correct, answered_at, tempo_resposta, tema) 
-       VALUES (?, ?, ?, ?, ?, ?, ?)`, [usuarioId, questionId, selectedAnswer, isCorrect ? 1 : 0, answeredAt, tempoResposta || null, tema || null]);
+        await pool.query(`INSERT INTO user_answers (usuario_id, question_id, selected_answer, is_correct, answered_at, tempo_resposta, tema, highlights) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`, [usuarioId, questionId, selectedAnswer, isCorrect ? 1 : 0, answeredAt, tempoResposta || null, tema || null, highlights || null]);
         res.json({
             success: true,
             message: "Resposta registrada com sucesso"
@@ -75,7 +75,7 @@ router.get("/performance", authenticateToken, async (req, res) => {
       FROM user_answers
       WHERE usuario_id = ?`, [usuarioId]);
         const stats = totalStats[0];
-        if (stats.totalQuestions === 0) {
+        if (!stats || stats.totalQuestions === 0) {
             return res.json(null);
         }
         // Desempenho por especialidade
@@ -88,7 +88,6 @@ router.get("/performance", authenticateToken, async (req, res) => {
       JOIN questions q ON ua.question_id = q.id
       WHERE ua.usuario_id = ? AND q.specialty IS NOT NULL
       GROUP BY q.specialty
-      HAVING COUNT(*) >= 3
       ORDER BY accuracy DESC`, [usuarioId]);
         // Desempenho por banca
         const [bySource] = await pool.query(`SELECT 
@@ -100,7 +99,6 @@ router.get("/performance", authenticateToken, async (req, res) => {
       JOIN questions q ON ua.question_id = q.id
       WHERE ua.usuario_id = ? AND q.source IS NOT NULL
       GROUP BY q.source
-      HAVING COUNT(*) >= 3
       ORDER BY total DESC`, [usuarioId]);
         // Tendência recente (últimos 7 e 30 dias)
         const now = Math.floor(Date.now() / 1000);

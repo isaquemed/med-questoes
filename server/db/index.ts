@@ -1,31 +1,27 @@
 import * as dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import fs from 'fs';
+import { drizzle } from "drizzle-orm/mysql2";
+import mysql from 'mysql2/promise';
+import * as schema from "./schema.js";
 
 // Configuração robusta do dotenv
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
-import fs from 'fs';
-import { drizzle } from "drizzle-orm/mysql2";
-import mysql from 'mysql2/promise';
-import * as schema from "./schema.js";
-
 const connectionString = process.env.DATABASE_URL;
 
 console.log("Tentando conectar ao banco de dados...");
+
+let pool: mysql.Pool;
+
 if (connectionString) {
   console.log("Usando DATABASE_URL para conexão.");
-} else {
-  console.log("DATABASE_URL não encontrada, usando variáveis de ambiente individuais.");
-}
-
-let pool;
-
-if (connectionString) {
   pool = mysql.createPool(connectionString);
 } else {
+  console.log("DATABASE_URL não encontrada, usando variáveis de ambiente individuais.");
   pool = mysql.createPool({
     host: process.env.DB_HOST,
     user: process.env.DB_USER,
@@ -44,4 +40,5 @@ if (connectionString) {
 }
 
 export const db = drizzle(pool, { schema, mode: 'default' });
+export { pool };
 export default pool;

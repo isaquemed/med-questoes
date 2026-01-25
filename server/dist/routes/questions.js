@@ -1,5 +1,5 @@
 import { Router } from "express";
-import pool from "../db/index.js";
+import { pool } from "../db/index.js";
 const router = Router();
 router.get('/', async (req, res) => {
     try {
@@ -48,9 +48,6 @@ router.get('/', async (req, res) => {
         }
         // 4. Buscar todas as alternativas para as questões selecionadas em uma única query
         const questionIds = questions.map(q => q.id);
-        if (questionIds.length === 0) {
-            return [];
-        }
         const placeholders = questionIds.map(() => '?').join(',');
         const [allAlternatives] = await pool.query(`SELECT * FROM alternatives WHERE question_id IN (${placeholders}) ORDER BY question_id, letter`, questionIds);
         // 5. Agrupar alternativas por questão

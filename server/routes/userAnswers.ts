@@ -1,11 +1,8 @@
-import express from "express";
-import pool from "../db/index.js";
-import { db } from "../db/index.js";
-import { userAnswers, questions } from "../db/schema.js";
-import { eq, and, desc, sql } from "drizzle-orm";
+import { Router } from "express";
+import { pool } from "../db/index.js";
 import { authenticateToken } from "../middleware/auth.js";
 
-const router = express.Router();
+const router = Router();
 
 /**
  * POST /api/user-answers
@@ -13,7 +10,7 @@ const router = express.Router();
  */
 router.post("/", authenticateToken, async (req: any, res: any) => {
   try {
-    const { questionId, selectedAnswer, isCorrect, tempoResposta, tema } = req.body;
+    const { questionId, selectedAnswer, isCorrect, tempoResposta, tema, highlights } = req.body;
     const usuarioId = req.user?.id;
 
     if (!questionId || !selectedAnswer || isCorrect === undefined) {
@@ -25,10 +22,10 @@ router.post("/", authenticateToken, async (req: any, res: any) => {
     const answeredAt = Math.floor(Date.now() / 1000);
 
     // Usar raw query para inserir
-    const [result]: [any, any] = await pool.query(
-      `INSERT INTO user_answers (usuario_id, question_id, selected_answer, is_correct, answered_at, tempo_resposta, tema) 
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [usuarioId, questionId, selectedAnswer, isCorrect ? 1 : 0, answeredAt, tempoResposta || null, tema || null]
+    await pool.query(
+      `INSERT INTO user_answers (usuario_id, question_id, selected_answer, is_correct, answered_at, tempo_resposta, tema, highlights) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [usuarioId, questionId, selectedAnswer, isCorrect ? 1 : 0, answeredAt, tempoResposta || null, tema || null, highlights || null]
     );
 
     res.json({
@@ -98,7 +95,7 @@ router.get("/performance", authenticateToken, async (req: any, res: any) => {
 
     const stats = totalStats[0];
 
-    if (stats.totalQuestions === 0) {
+    if (!stats || stats.totalQuestions === 0) {
       return res.json(null);
     }
 
@@ -113,7 +110,6 @@ router.get("/performance", authenticateToken, async (req: any, res: any) => {
       JOIN questions q ON ua.question_id = q.id
       WHERE ua.usuario_id = ? AND q.specialty IS NOT NULL
       GROUP BY q.specialty
-      HAVING COUNT(*) >= 3
       ORDER BY accuracy DESC`,
       [usuarioId]
     );
@@ -129,7 +125,6 @@ router.get("/performance", authenticateToken, async (req: any, res: any) => {
       JOIN questions q ON ua.question_id = q.id
       WHERE ua.usuario_id = ? AND q.source IS NOT NULL
       GROUP BY q.source
-      HAVING COUNT(*) >= 3
       ORDER BY total DESC`,
       [usuarioId]
     );

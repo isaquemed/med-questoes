@@ -11,6 +11,7 @@ import { questionsApi } from "@/lib/api";
 import "@/styles/emed.css";
 import { useLocation } from "wouter";
 import { LogIn, User, BarChart3, LogOut, Highlighter } from "lucide-react";
+import axios from "axios";
 
 export interface Question {
   id: string;
@@ -31,6 +32,7 @@ interface QuestionStatus {
   correct?: boolean;
   marked: boolean;
   selectedAnswer?: string;
+  highlights?: string;
 }
 
 type PageState = "home" | "quiz" | "results";
@@ -46,85 +48,79 @@ export default function Home() {
   const [availableFilters, setAvailableFilters] = useState({ sources: [], years: [], specialties: [], topics: [] });
   const [totalQuestionsCount, setTotalQuestionsCount] = useState(0);
   const [loading, setLoading] = useState(false);
-  // Estados para usuário e grifos
-const [, setLocation] = useLocation();
-const [user, setUser] = useState(() => {
-  const saved = localStorage.getItem("medquestoes_user");
-  return saved ? JSON.parse(saved) : null;
-});
-const [highlightsEnabled, setHighlightsEnabled] = useState(true);
-const [questionStartTime, setQuestionStartTime] = useState(Date.now());
+  
+  const [, setLocation] = useLocation();
+  const [user, setUser] = useState(() => {
+    const saved = localStorage.getItem("medquestoes_user");
+    return saved ? JSON.parse(saved) : null;
+  });
+  const [highlightsEnabled, setHighlightsEnabled] = useState(true);
+  const [questionStartTime, setQuestionStartTime] = useState(Date.now());
 
   useEffect(() => {
     fetchFilters();
     fetchQuestions();
   }, []);
 
-
-// Efeito para a funcionalidade de grifar
-useEffect(() => {
-  if (!highlightsEnabled) return;
-
-  const handleMouseUp = () => {
-    const selection = window.getSelection();
-    const selectedText = selection?.toString().trim();
-    
-    if (selectedText && selectedText.length > 0) {
-      const range = selection?.getRangeAt(0);
-      if (!range) return;
-      
-      const selectedNode = range.startContainer.parentNode;
-      
-      if (selectedNode instanceof HTMLElement && selectedNode.classList.contains('highlighted')) {
-        // Desgrifar
-        const parent = selectedNode.parentNode;
-        if (parent) {
-          while (selectedNode.firstChild) {
-            parent.insertBefore(selectedNode.firstChild, selectedNode);
-          }
-          parent.removeChild(selectedNode);
-          normalize(parent);
-        }
-      } else {
-        // Grifar
-        const span = document.createElement('span');
-        span.className = 'highlighted';
-        
-        try {
-          range.surroundContents(span);
-        } catch(e) {
-          // Fallback para seleções complexas
-          const contents = range.extractContents();
-          span.appendChild(contents);
-          range.insertNode(span);
-        }
-      }
-      
-      selection?.removeAllRanges();
-    }
-  };
-
-  document.addEventListener('mouseup', handleMouseUp);
-  return () => document.removeEventListener('mouseup', handleMouseUp);
-}, [highlightsEnabled]);
-
-  // Atalhos de teclado
+  // Efeito para a funcionalidade de grifar
   useEffect(() => {
-    if (pageState !== "quiz") return;
+    if (!highlightsEnabled || pageState !== "quiz") return;
 
-    const handleKeyPress = (e: KeyboardEvent) => {
-      if (e.key === "ArrowLeft") {
-        handlePrevious();
-      } else if (e.key === "ArrowRight") {
-        handleNext();
-      } else if (e.key === "m" || e.key === "M") {
-        handleToggleMark(currentIndex);
+    const handleMouseUp = () => {
+      const selection = window.getSelection();
+      const selectedText = selection?.toString().trim();
+      
+      if (selectedText && selectedText.length > 0) {
+        const range = selection?.getRangeAt(0);
+        if (!range) return;
+        
+        const selectedNode = range.startContainer.parentNode;
+        
+        if (selectedNode instanceof HTMLElement && selectedNode.classList.contains('highlighted')) {
+          // Desgrifar
+          const parent = selectedNode.parentNode;
+          if (parent) {
+            while (selectedNode.firstChild) {
+              parent.insertBefore(selectedNode.firstChild, selectedNode);
+            }
+            parent.removeChild(selectedNode);
+            parent.normalize();
+          }
+        } else {
+          // Grifar
+          const span = document.createElement('span');
+          span.className = 'highlighted';
+          
+          try {
+            range.surroundContents(span);
+          } catch(e) {
+            const contents = range.extractContents();
+            span.appendChild(contents);
+            range.insertNode(span);
+          }
+        }
+        
+        // Salvar o estado atual do HTML da questão como grifos
+        const questionContainer = document.querySelector('.prose-blue');
+        if (questionContainer) {
+          const currentHighlights = questionContainer.innerHTML;
+          setQuestionStatuses(prev => {
+            const newStatuses = [...prev];
+            newStatuses[currentIndex] = {
+              ...newStatuses[currentIndex],
+              highlights: currentHighlights
+            };
+            return newStatuses;
+          });
+        }
+        
+        selection?.removeAllRanges();
       }
     };
 
-    window.addEventListener("keydown", handleKeyPress);
-    return () => window.removeEventListener("keydown", handleKeyPress);
-  }, [pageState, currentIndex, questionStatuses]);
+    document.addEventListener('mouseup', handleMouseUp);
+    return () => document.removeEventListener('mouseup', handleMouseUp);
+  }, [highlightsEnabled, pageState, currentIndex]);
 
   const fetchFilters = async () => {
     try {
@@ -143,703 +139,497 @@ useEffect(() => {
   };
 
   const fetchQuestions = async (currentFilters = filters) => {
-  setLoading(true);
-  try {
-    const params: any = {};
-    if (currentFilters.source !== "all") params.source = currentFilters.source;
-    if (currentFilters.year !== "all") params.year = currentFilters.year;
-    if (currentFilters.specialty !== "all") params.specialty = currentFilters.specialty;
-    if (currentFilters.topic !== "all") params.topic = currentFilters.topic;
-    params.limit = parseInt(currentFilters.limit) || 10;
-    params.page = 1;
+    setLoading(true);
+    try {
+      const params: any = {};
+      if (currentFilters.source !== "all") params.source = currentFilters.source;
+      if (currentFilters.year !== "all") params.year = currentFilters.year;
+      if (currentFilters.specialty !== "all") params.specialty = currentFilters.specialty;
+      if (currentFilters.topic !== "all") params.topic = currentFilters.topic;
+      params.limit = parseInt(currentFilters.limit) || 10;
+      params.page = 1;
 
-    const response = await questionsApi.getQuestions(params);
-    
-    if (!response) {
+      const response = await questionsApi.getQuestions(params);
+      const responseData = response.data || response;
+
+      const questionsList = Array.isArray(responseData.questions) 
+        ? responseData.questions 
+        : (Array.isArray(responseData) ? responseData : []);
+      
+      const total = responseData.pagination?.total || 
+                    responseData.total || 
+                    questionsList.length;
+      
+      setQuestions(questionsList);
+      setTotalQuestionsCount(total);
+    } catch (error) {
+      console.error("Error fetching questions:", error);
       setQuestions([]);
-      setTotalQuestionsCount(0);
-      return;
+    } finally {
+      setLoading(false);
     }
-
-    const responseData = response.data || response;
-
-    const questionsList = Array.isArray(responseData.questions) 
-      ? responseData.questions 
-      : (Array.isArray(responseData) ? responseData : []);
-    
-    const total = responseData.pagination?.total || 
-                  responseData.total || 
-                  questionsList.length;
-    
-    
-    setQuestions(questionsList);
-    setTotalQuestionsCount(total);
-  } catch (error) {
-    console.error("Error fetching questions:", error);
-    setQuestions([]);
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   const handleFilterChange = async (key: string, value: string) => {
-  const newFilters = { ...filters, [key]: value };
-  
-  if (key === "specialty") {
-    newFilters.topic = "all";
+    const newFilters = { ...filters, [key]: value };
     
-    try {
-      // CORREÇÃO: Extrair os dados da resposta
-      const response = await fetch(`/api/filters/filtered-topics?specialty=${encodeURIComponent(value)}`);
-      
-      // 1. Verifica se a resposta foi bem-sucedida
-      if (!response.ok) {
-        throw new Error(`Erro HTTP: ${response.status}`);
+    if (key === "specialty") {
+      newFilters.topic = "all";
+      try {
+        const response = await fetch(`/api/filters/filtered-topics?specialty=${encodeURIComponent(value)}`);
+        if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
+        const result = await response.json();
+        setAvailableFilters(prev => ({
+          ...prev,
+          topics: result.topics || []
+        }));
+      } catch (err) {
+        setAvailableFilters(prev => ({ ...prev, topics: [] }));
       }
-      
-      // 2. Extrai os dados JSON da resposta
-      const result = await response.json();
-      
-      // 3. CORREÇÃO: Usa 'result' em vez de 'data'
-      setAvailableFilters(prev => ({
-        ...prev,
-        topics: result.topics || []
-      }));
-      
-      
-    } catch (err) {
-      setAvailableFilters(prev => ({
-        ...prev,
-        topics: []
-      }));
     }
-  }
-  
-  setFilters(newFilters);
-  await fetchQuestions(newFilters);
-};
+    
+    setFilters(newFilters);
+    await fetchQuestions(newFilters);
+  };
 
   const handleStartQuiz = async () => {
     if (loading) return;
-    
     setLoading(true);
     try {
-   	 const quizFilters = { ...filters };
-    	const limit = parseInt(quizFilters.limit) || 10;
-        
-    	const params: any = {};
-   	 if (quizFilters.source !== "all") params.source = quizFilters.source;
-    	if (quizFilters.year !== "all") params.year = quizFilters.year;
-   	 if (quizFilters.specialty !== "all") params.specialty = quizFilters.specialty;
-    	if (quizFilters.topic !== "all") params.topic = quizFilters.topic;
-    
-    	params.limit = limit;
-    	params.page = 1; 
-    
-  	  const response = await questionsApi.getQuestions(params);
-  	  const responseData = response?.data || response;
-    
-  	  let questionsList = [];
-  	  if (Array.isArray(responseData.questions)) {
-   		   questionsList = responseData.questions;
-  	  } else if (Array.isArray(responseData)) {
-   		   questionsList = responseData;
-   	 }
-    
-    const availableQuestions = Math.min(questionsList.length, limit);
-    
-    if (availableQuestions === 0) {
-      alert("Nenhuma questão encontrada com os filtros atuais!");
+      const limit = parseInt(filters.limit) || 10;
+      const params: any = { ...filters, limit, page: 1 };
+      delete params.limit; // questionsApi.getQuestions expects limit in params
+      
+      const response = await questionsApi.getQuestions({
+        ...params,
+        limit
+      });
+      const responseData = response?.data || response;
+      
+      let questionsList = Array.isArray(responseData.questions) ? responseData.questions : (Array.isArray(responseData) ? responseData : []);
+      
+      if (questionsList.length === 0) {
+        alert("Nenhuma questão encontrada com os filtros atuais!");
+        setLoading(false);
+        return;
+      }
+      
+      const shuffled = [...questionsList].sort(() => Math.random() - 0.5);
+      const selectedQuestions = shuffled.slice(0, Math.min(questionsList.length, limit));
+      
+      setQuestions(selectedQuestions);
+      setCurrentIndex(0);
+      setStats({ correct: 0, incorrect: 0 });
+      setQuestionStatuses(selectedQuestions.map(() => ({ answered: false, marked: false })));
+      setPageState("quiz");
+      setQuestionStartTime(Date.now());
+    } catch (error) {
+      console.error("Erro ao iniciar simulado:", error);
+      alert("Erro ao carregar questões. Tente novamente.");
+    } finally {
       setLoading(false);
-      return;
     }
-    
-    const shuffled = [...questionsList].sort(() => Math.random() - 0.5);
-    const selectedQuestions = shuffled.slice(0, availableQuestions);
-    
-    
-    setQuestions(selectedQuestions);
-    setCurrentIndex(0);
-    setStats({ correct: 0, incorrect: 0 });
-    setQuestionStatuses(
-      selectedQuestions.map(() => ({
-        answered: false,
-        marked: false,
-      }))
-    );
-    
-    setPageState("quiz");
-    
-  } catch (error) {
-    console.error("❌ Erro ao iniciar simulado:", error);
-    alert("Erro ao carregar questões para o simulado. Tente novamente.");
-  } finally {
-    setLoading(false);
-  }
-};
+  };
+
+  const saveAnswer = async (isCorrect: boolean, selectedAnswer: string, questionId: string, tema: string, highlights?: string) => {
+    try {
+      const token = localStorage.getItem("medquestoes_token");
+      if (!token) return;
+
+      const tempoResposta = Math.floor((Date.now() - questionStartTime) / 1000);
+
+      await axios.post("/api/user-answers", {
+        questionId,
+        selectedAnswer,
+        isCorrect,
+        tempoResposta,
+        tema,
+        highlights
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+    } catch (error) {
+      console.error("Erro ao salvar resposta no banco:", error);
+    }
+  };
 
   const handleAnswer = (selectedAnswer: string, isCorrect: boolean) => {
-  // Salvar a resposta se o usuário estiver logado
-  if (user) {
-    // Obter o tema da questão atual (ajuste conforme sua estrutura)
-    const tema = questions[currentIndex]?.specialty || "Geral";
-    saveAnswer(isCorrect, selectedAnswer, questions[currentIndex].id, tema);
-  }
+    const currentStatus = questionStatuses[currentIndex];
+    if (user) {
+      const tema = questions[currentIndex]?.specialty || "Geral";
+      saveAnswer(isCorrect, selectedAnswer, questions[currentIndex].id, tema, currentStatus.highlights);
+    }
 
-  // Atualizar estatísticas
-  setStats((prev) => ({
-    correct: prev.correct + (isCorrect ? 1 : 0),
-    incorrect: prev.incorrect + (isCorrect ? 0 : 1),
-  }));
+    setStats((prev) => ({
+      correct: prev.correct + (isCorrect ? 1 : 0),
+      incorrect: prev.incorrect + (isCorrect ? 0 : 1),
+    }));
 
-  // Atualizar status da questão
-  setQuestionStatuses((prev) => {
-    const newStatuses = [...prev];
-    newStatuses[currentIndex] = {
-      ...newStatuses[currentIndex],
-      answered: true,
-      correct: isCorrect,
-      selectedAnswer: selectedAnswer,
-    };
-    return newStatuses;
-  });
-};
+    setQuestionStatuses((prev) => {
+      const newStatuses = [...prev];
+      newStatuses[currentIndex] = {
+        ...newStatuses[currentIndex],
+        answered: true,
+        correct: isCorrect,
+        selectedAnswer: selectedAnswer,
+      };
+      return newStatuses;
+    });
+  };
 
   const handleNavigate = useCallback((index: number) => {
     setCurrentIndex(index);
+    setQuestionStartTime(Date.now());
   }, []);
 
   const handlePrevious = useCallback(() => {
     if (currentIndex > 0) {
       setCurrentIndex(currentIndex - 1);
+      setQuestionStartTime(Date.now());
     }
   }, [currentIndex]);
 
   const handleNext = useCallback(() => {
     if (currentIndex < questions.length - 1) {
       setCurrentIndex(currentIndex + 1);
+      setQuestionStartTime(Date.now());
     }
   }, [currentIndex, questions.length]);
 
-  const handleToggleMark = useCallback((index: number) => {
-    setQuestionStatuses((prev) => {
+  const handleToggleMark = (index: number) => {
+    setQuestionStatuses(prev => {
       const newStatuses = [...prev];
-      newStatuses[index] = {
-        ...newStatuses[index],
-        marked: !newStatuses[index].marked,
-      };
+      newStatuses[index] = { ...newStatuses[index], marked: !newStatuses[index].marked };
       return newStatuses;
     });
-  }, []);
+  };
 
   const handleFinishQuiz = () => {
     setPageState("results");
   };
 
-// ======================================
-// FUNÇÕES PARA GRIFAR TEXTO
-// ======================================
-
-const normalize = (element: any) => {
-  element.normalize();
-};
-
-const clearHighlights = () => {
-  document.querySelectorAll('.highlighted').forEach(el => {
-    const parent = el.parentNode;
-    if (parent) {
-      while (el.firstChild) {
-        parent.insertBefore(el.firstChild, el);
-      }
-      parent.removeChild(el);
-      normalize(parent);
-    }
-  });
-};
-
-// ======================================
-// FUNÇÕES PARA USUÁRIO E SALVAR RESPOSTAS
-// ======================================
-
-const handleLogout = () => {
-  setUser(null);
-  localStorage.removeItem('medquestoes_user');
-  localStorage.removeItem('medquestoes_token');
-};
-
-// Função para salvar resposta (chame essa função quando o usuário responder)
-const saveAnswer = async (isCorrect: boolean, selectedOption: string, questionId: string, tema: string) => {
-  if (!user) return;
-
-  const timeSpent = Math.floor((Date.now() - questionStartTime) / 1000);
-  const token = localStorage.getItem("medquestoes_token");
-
-  const answerData = {
-    questao_id: questionId,
-    opcao_escolhida: selectedOption,
-    acertou: isCorrect,
-    tempo_resposta: timeSpent,
-    tema: tema,
-  };
-
-  try {
-    // Tentar salvar no backend
-    if (token) {
-      const response = await fetch("/api/user-answers", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          questionId: questionId,
-          selectedAnswer: selectedOption,
-          isCorrect: isCorrect,
-          tempoResposta: timeSpent,
-          tema: tema
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Erro no servidor");
-      }
-    } else {
-      throw new Error("Sem token");
-    }
-  } catch (error) {
-    // Fallback para localStorage
-    const userAnswers = JSON.parse(localStorage.getItem("medquestoes_answers") || "[]");
-    userAnswers.push({
-      ...answerData,
-      data_resposta: new Date().toISOString(),
-    });
-    localStorage.setItem("medquestoes_answers", JSON.stringify(userAnswers));
-    updatePerformance(tema, isCorrect);
-  }
-
-  setQuestionStartTime(Date.now());
-};
-
-const updatePerformance = (tema: string, acertou: boolean) => {
-  let performance = JSON.parse(localStorage.getItem('medquestoes_performance') || '[]');
-  
-  let temaIndex = performance.findIndex((p: any) => p.tema === tema);
-  
-  if (temaIndex === -1) {
-    performance.push({
-      tema: tema,
-      totalQuestoes: 0,
-      acertos: 0,
-      erros: 0,
-      taxaAcerto: 0
-    });
-    temaIndex = performance.length - 1;
-  }
-  
-  performance[temaIndex].totalQuestoes += 1;
-  if (acertou) {
-    performance[temaIndex].acertos += 1;
-  } else {
-    performance[temaIndex].erros += 1;
-  }
-  
-  performance[temaIndex].taxaAcerto = 
-    (performance[temaIndex].acertos / performance[temaIndex].totalQuestoes) * 100;
-  
-  localStorage.setItem('medquestoes_performance', JSON.stringify(performance));
-};
-
   const handleRestart = () => {
     setPageState("home");
-    fetchQuestions();
+    setQuestions([]);
+    setCurrentIndex(0);
+    setStats({ correct: 0, incorrect: 0 });
+    setQuestionStatuses([]);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("medquestoes_user");
+    localStorage.removeItem("medquestoes_token");
+    setUser(null);
+    setLocation("/");
+  };
+
+  const clearHighlights = () => {
+    const questionContainer = document.querySelector('.prose-blue');
+    if (questionContainer) {
+      // Remove all spans with class 'highlighted' but keep their text
+      const highlights = questionContainer.querySelectorAll('.highlighted');
+      highlights.forEach(h => {
+        const parent = h.parentNode;
+        if (parent) {
+          while (h.firstChild) {
+            parent.insertBefore(h.firstChild, h);
+          }
+          parent.removeChild(h);
+          parent.normalize();
+        }
+      });
+      
+      setQuestionStatuses(prev => {
+        const newStatuses = [...prev];
+        newStatuses[currentIndex] = {
+          ...newStatuses[currentIndex],
+          highlights: undefined
+        };
+        return newStatuses;
+      });
+    }
   };
 
   if (pageState === "home") {
     return (
-      <div className="emed-layout">
-        {/* Sidebar Inspirada no Estratégia MED */}
-        <aside className="emed-sidebar">
-          <div className="mb-10 px-4">
-            <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-              <Stethoscope className="text-[#c5a059]" />
-              MED <span className="font-light">Questões</span>
-            </h1>
-          </div>
-          
-          <nav className="space-y-2">
-            <button className="w-full flex items-center gap-3 px-4 py-3 rounded-lg bg-white/10 text-white font-medium">
-              <LayoutDashboard size={20} /> Dashboard
-            </button>
-            <button className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white/5 text-gray-300 transition-colors">
-              <BookOpen size={20} /> Banco de Questões
-            </button>
-            <button className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white/5 text-gray-300 transition-colors">
-              <ListChecks size={20} /> Meus Cadernos
-            </button>
-            <button className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white/5 text-gray-300 transition-colors">
-              <Trophy size={20} /> Simulados
-            </button>
-            <div className="pt-10">
-              <button className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white/5 text-gray-300 transition-colors">
-                <Settings size={20} /> Configurações
-              </button>
+      <div className="min-h-screen bg-background">
+        <nav className="bg-white border-b border-gray-100 sticky top-0 z-50">
+          <div className="max-w-7xl mx-auto px-4 h-20 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-10 h-10 bg-[#002b5c] rounded-lg flex items-center justify-center text-white">
+                <Stethoscope size={24} />
+              </div>
+              <h1 className="text-2xl font-bold text-[#002b5c]">MedQuestões</h1>
             </div>
-          </nav>
-        </aside>
-
-        <main className="emed-main">
-  {/* Painel do usuário */}
-  {user ? (
-    <div className="user-info-panel">
-      <div className="flex items-center gap-2">
-        <User size={16} />
-        <span className="text-sm font-medium">Olá, {user.nome || user.name}</span>
-      </div>
-      <div className="flex items-center gap-2">
-        <button
-          onClick={() => setLocation('/performance')}
-          className="user-action-link flex items-center gap-1"
-        >
-          <BarChart3 size={14} />
-          Desempenho
-        </button>
-        <button
-          onClick={() => setLocation('/error-notebook')}
-          className="user-action-link flex items-center gap-1"
-        >
-          <BookOpen size={14} />
-          Erros
-        </button>
-        <button
-          onClick={handleLogout}
-          className="user-action-link text-destructive flex items-center gap-1"
-        >
-          <LogOut size={14} />
-          Sair
-        </button>
-      </div>
-    </div>
-  ) : (
-    <div className="user-info-panel">
-      <div className="flex items-center gap-2">
-        <User size={16} className="text-gray-400" />
-        <span className="text-sm font-medium text-gray-500">Acesse sua conta para salvar seu progresso</span>
-      </div>
-      <button
-        onClick={() => setLocation('/login')}
-        className="user-action-link flex items-center gap-1 font-bold text-[#002b5c]"
-      >
-        <LogIn size={14} />
-        Entrar / Cadastrar
-      </button>
-    </div>
-  )}
-  
-  
-
-          <div className="max-w-6xl mx-auto space-y-8">
-            <header className="flex justify-between items-end">
-              <div>
-                <h2 className="text-3xl font-bold text-[#002b5c]">Banco de Questões</h2>
-                <p className="text-gray-500">Crie sua lista personalizada de estudos</p>
-              </div>
-              <div className="text-sm text-gray-400">
-                {totalQuestionsCount} questões encontradas com os filtros atuais
-              </div>
-            </header>
-
-            {/* Filters Card Estilo Estratégia */}
-            <Card className="emed-card overflow-hidden">
-              <div className="bg-gray-50 px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-                <div className="flex items-center gap-2 font-semibold text-[#002b5c]">
-                  <Filter size={18} /> Filtros Avançados
+            
+            <div className="flex items-center gap-6">
+              {user ? (
+                <div className="flex items-center gap-4">
+                  <div className="text-right hidden md:block">
+                    <p className="text-sm font-bold text-[#002b5c]">{user.nome}</p>
+                    <p className="text-xs text-gray-500">{user.email}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button variant="ghost" size="sm" onClick={() => setLocation('/performance')} className="text-[#002b5c]">
+                      <BarChart3 size={18} className="mr-2" /> Desempenho
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => setLocation('/error-notebook')} className="text-[#002b5c]">
+                      <BookOpen size={18} className="mr-2" /> Erros
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={handleLogout} className="text-red-500">
+                      <LogOut size={18} />
+                    </Button>
+                  </div>
                 </div>
-                <Button variant="ghost" size="sm" className="text-gray-400" onClick={() =>{ setFilters({ source: "all", year: "all", specialty: "all", topic: "all", limit: "10" });
-fetchFilters(); fetchQuestions();;
-}}
->
-                  Limpar Filtros
+              ) : (
+                <Button onClick={() => setLocation('/login')} className="bg-[#002b5c] hover:bg-[#001a3a]">
+                  <LogIn size={18} className="mr-2" /> Entrar / Cadastrar
+                </Button>
+              )}
+            </div>
+          </div>
+        </nav>
+
+        <main className="max-w-7xl mx-auto px-4 py-12">
+          <div className="grid lg:grid-cols-2 gap-12 items-center mb-16">
+            <div className="space-y-6">
+              <h2 className="text-5xl font-extrabold text-[#002b5c] leading-tight">
+                Sua aprovação na <span className="text-[#d4af37]">Residência Médica</span> começa aqui.
+              </h2>
+              <p className="text-xl text-gray-600">
+                Plataforma inteligente de questões com resoluções comentadas por IA e análise de desempenho detalhada.
+              </p>
+              <div className="flex gap-4">
+                <Button size="lg" className="bg-[#002b5c] px-8 py-6 text-lg" onClick={() => document.getElementById('filtros')?.scrollIntoView({ behavior: 'smooth' })}>
+                  Começar Agora
+                </Button>
+                <Button size="lg" variant="outline" className="border-[#002b5c] text-[#002b5c] px-8 py-6 text-lg">
+                  Ver Planos
                 </Button>
               </div>
-            <div className="p-8 bg-white">
-              <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-6">
+            </div>
+            <div className="relative hidden lg:block">
+              <div className="absolute -top-4 -left-4 w-72 h-72 bg-[#d4af37]/10 rounded-full blur-3xl"></div>
+              <div className="absolute -bottom-4 -right-4 w-72 h-72 bg-[#002b5c]/10 rounded-full blur-3xl"></div>
+              <Card className="relative p-8 border-none shadow-2xl bg-white/80 backdrop-blur-sm">
+                <div className="space-y-4">
+                  <div className="flex items-center gap-4 p-4 bg-white rounded-xl shadow-sm">
+                    <div className="w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center">
+                      <Trophy size={24} />
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Taxa de Acerto</p>
+                      <p className="text-xl font-bold text-[#002b5c]">84.5%</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4 p-4 bg-white rounded-xl shadow-sm">
+                    <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center">
+                      <ListChecks size={24} />
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Questões Respondidas</p>
+                      <p className="text-xl font-bold text-[#002b5c]">1,240</p>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            </div>
+          </div>
+
+          <div id="filtros" className="space-y-8">
+            <div className="text-center space-y-2">
+              <h3 className="text-3xl font-bold text-[#002b5c]">Personalize seu Estudo</h3>
+              <p className="text-gray-500">Selecione os filtros abaixo para gerar sua lista de questões</p>
+            </div>
+
+            <Card className="p-8 shadow-xl border-t-4 border-t-[#d4af37]">
+              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold text-gray-600">Banca</label>
+                  <label className="text-sm font-bold text-gray-700">Banca</label>
                   <Select value={filters.source} onValueChange={(v) => handleFilterChange("source", v)}>
-                    <SelectTrigger className="bg-gray-50 border-gray-200">
+                    <SelectTrigger className="bg-gray-50">
                       <SelectValue placeholder="Todas as bancas" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">Todas as bancas</SelectItem>
-                      {(availableFilters.sources || []).map((s: string) => (
-                        <SelectItem key={s} value={s}>{s}</SelectItem>
-                      ))}
+                      {availableFilters.sources.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold text-gray-600">Ano</label>
+                  <label className="text-sm font-bold text-gray-700">Ano</label>
                   <Select value={filters.year} onValueChange={(v) => handleFilterChange("year", v)}>
-                    <SelectTrigger className="bg-gray-50 border-gray-200">
+                    <SelectTrigger className="bg-gray-50">
                       <SelectValue placeholder="Todos os anos" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">Todos os anos</SelectItem>
-                      {(availableFilters.years || []).map((y: any) => (
-                        <SelectItem key={y} value={String(y)}>{y}</SelectItem>
-                      ))}
+                      {availableFilters.years.map((y) => <SelectItem key={String(y)} value={String(y)}>{y}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold text-gray-600">Área / Especialidade</label>
+                  <label className="text-sm font-bold text-gray-700">Especialidade</label>
                   <Select value={filters.specialty} onValueChange={(v) => handleFilterChange("specialty", v)}>
-                    <SelectTrigger className="bg-gray-50 border-gray-200">
+                    <SelectTrigger className="bg-gray-50">
                       <SelectValue placeholder="Todas as áreas" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">Todas as áreas</SelectItem>
-                      {(availableFilters.specialties || []).map((s: string) => (
-                        <SelectItem key={s} value={s}>{s}</SelectItem>
-                      ))}
+                      {availableFilters.specialties.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold text-gray-600">Tema Específico</label>
-                  <Select value={filters.topic} onValueChange={(v) => handleFilterChange("topic", v)}>
-                    <SelectTrigger className="bg-gray-50 border-gray-200">
-                      <SelectValue placeholder="Todos os temas" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todos os temas</SelectItem>
-                      {(availableFilters.topics || []).map((t: any) => (
-                        <SelectItem key={t} value={String(t)}>{t}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-semibold text-gray-600">Qtd. Questões</label>
+                  <label className="text-sm font-bold text-gray-700">Quantidade</label>
                   <Input 
                     type="number" 
-                    min="1" 
-                    max={totalQuestionsCount}
                     value={filters.limit} 
                     onChange={(e) => setFilters(prev => ({ ...prev, limit: e.target.value }))}
-                    placeholder="Ex: 15"
-                    className="bg-gray-50 border-gray-200"
+                    className="bg-gray-50"
                   />
                 </div>
               </div>
-              
-              <div className="mt-10 flex justify-center">
+
+              <div className="flex justify-center">
                 <Button 
                   size="lg" 
-                  className="emed-button-primary px-20 py-8 text-xl rounded-xl shadow-xl"
+                  className="bg-[#002b5c] hover:bg-[#001a3a] px-12 py-7 text-xl rounded-xl shadow-lg"
                   onClick={handleStartQuiz}
-                  disabled={loading || questions.length === 0}
+                  disabled={loading}
                 >
-                  {loading ? "Preparando Questões..." : "Gerar Lista de Questões"}
+                  {loading ? "Carregando..." : "Gerar Simulado"}
                 </Button>
-              </div>
-            </div>
-          </Card>
-
-          <div className="grid md:grid-cols-3 gap-6">
-            <Card className="emed-card p-6 flex items-start gap-4">
-              <div className="p-3 bg-blue-50 rounded-lg text-[#002b5c]">
-                <Brain size={24} />
-              </div>
-              <div>
-                <h4 className="font-bold text-[#002b5c]">Questões Comentadas</h4>
-                <p className="text-sm text-gray-500">Milhares de questões com explicações detalhadas.</p>
-              </div>
-            </Card>
-            <Card className="emed-card p-6 flex items-start gap-4">
-              <div className="p-3 bg-amber-50 rounded-lg text-[#c5a059]">
-                <Trophy size={24} />
-              </div>
-              <div>
-                <h4 className="font-bold text-[#002b5c]">Ranking Nacional</h4>
-                <p className="text-sm text-gray-500">Compare seu desempenho com outros alunos.</p>
-              </div>
-            </Card>
-            <Card className="emed-card p-6 flex items-start gap-4">
-              <div className="p-3 bg-green-50 rounded-lg text-green-600">
-                <ListChecks size={24} />
-              </div>
-              <div>
-                <h4 className="font-bold text-[#002b5c]">Simulados Inéditos</h4>
-                <p className="text-sm text-gray-500">Provas criadas por nossos especialistas.</p>
               </div>
             </Card>
           </div>
-        </div>
-      </main>
-    </div>
+        </main>
+      </div>
     );
   }
 
   if (pageState === "quiz") {
-  const currentQuestion = questions[currentIndex];
-  const currentStatus = questionStatuses[currentIndex];
+    const currentQuestion = questions[currentIndex];
+    const currentStatus = questionStatuses[currentIndex];
 
-  return (
-    <div className="min-h-screen bg-background py-4 md:py-8">
-      <div className="container max-w-7xl">
-        <div className="grid lg:grid-cols-4 gap-6">
-          <div className="lg:col-span-3 space-y-6">
-            {currentQuestion && (
-              <QuestionCard
-                key={currentQuestion.id}
-                question={currentQuestion}
-                onAnswer={handleAnswer}
-                initialAnswer={currentStatus?.selectedAnswer}
-              />
-            )}
-
-            <div className="flex gap-4 justify-between">
-              <Button
-                variant="outline"
-                onClick={() => setPageState("home")}
-              >
-                Voltar ao Início
-              </Button>
-              
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  onClick={clearHighlights}
-                  className="flex items-center gap-2"
-                >
-                  <Highlighter size={16} />
-                  Limpar Grifos
+    return (
+      <div className="min-h-screen bg-[#f8fafc] py-8">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="grid lg:grid-cols-4 gap-8">
+            <div className="lg:col-span-3 space-y-6">
+              <div className="flex items-center justify-between bg-white p-4 rounded-xl shadow-sm border-l-4 border-l-[#d4af37]">
+                <Button variant="ghost" onClick={() => setPageState("home")} className="text-[#002b5c]">
+                  <ArrowLeft className="mr-2 w-4 h-4" /> Sair do Simulado
                 </Button>
-                <Button
-                  onClick={handleFinishQuiz}
-                  className="elegant-button"
-                >
-                  Finalizar Simulado
-                </Button>
+                <div className="flex items-center gap-4">
+                  <Button variant="outline" onClick={clearHighlights} className="text-[#002b5c] border-[#002b5c]">
+                    <Highlighter className="mr-2 w-4 h-4" /> Limpar Grifos
+                  </Button>
+                  <Button onClick={handleFinishQuiz} className="bg-[#002b5c]">
+                    Finalizar
+                  </Button>
+                </div>
               </div>
+
+              {currentQuestion && (
+                <QuestionCard
+                  key={currentQuestion.id}
+                  question={currentQuestion}
+                  onAnswer={handleAnswer}
+                  initialAnswer={currentStatus?.selectedAnswer}
+                />
+              )}
             </div>
-          </div>
 
-          <div className="space-y-6">
-            <QuestionNavigation
-              currentIndex={currentIndex}
-              totalQuestions={questions.length}
-              questionStatuses={questionStatuses}
-              onNavigate={handleNavigate}
-              onToggleMark={handleToggleMark}
-              onPrevious={handlePrevious}
-              onNext={handleNext}
-            />
+            <div className="space-y-6">
+              <QuestionNavigation
+                currentIndex={currentIndex}
+                totalQuestions={questions.length}
+                questionStatuses={questionStatuses}
+                onNavigate={handleNavigate}
+                onToggleMark={handleToggleMark}
+                onPrevious={handlePrevious}
+                onNext={handleNext}
+              />
 
-            <ProgressBar
-              current={currentIndex + 1}
-              total={questions.length}
-              correct={stats.correct}
-              incorrect={stats.incorrect}
-            />
+              <ProgressBar
+                current={currentIndex + 1}
+                total={questions.length}
+                correct={stats.correct}
+                incorrect={stats.incorrect}
+              />
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  );
-}
+    );
+  }
 
   if (pageState === "results") {
     const totalAnswered = stats.correct + stats.incorrect;
-    const percentage =
-      totalAnswered > 0 ? (stats.correct / totalAnswered) * 100 : 0;
-    const markedCount = questionStatuses.filter(s => s.marked).length;
+    const percentage = totalAnswered > 0 ? (stats.correct / totalAnswered) * 100 : 0;
 
     return (
-      <div className="min-h-screen bg-background py-8">
-        <div className="container max-w-2xl">
-          <Card className="elegant-card p-12 text-center space-y-8">
-            <div>
-              <h1 className="text-4xl font-bold mb-2">Simulado Concluído!</h1>
-              <p className="text-muted-foreground">
-                Veja seus resultados abaixo
-              </p>
+      <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center p-4">
+        <Card className="max-w-2xl w-full p-12 text-center space-y-8 shadow-2xl border-t-8 border-t-[#002b5c]">
+          <div className="space-y-2">
+            <div className="w-20 h-20 bg-[#d4af37]/10 text-[#d4af37] rounded-full flex items-center justify-center mx-auto mb-4">
+              <Trophy size={40} />
             </div>
+            <h1 className="text-4xl font-bold text-[#002b5c]">Simulado Concluído!</h1>
+            <p className="text-gray-500">Confira seu desempenho detalhado</p>
+          </div>
 
-            <div className="grid grid-cols-3 gap-4 py-8 border-y border-border">
-              <div>
-                <p className="text-sm text-muted-foreground mb-2">Corretas</p>
-                <p className="text-4xl font-bold text-green-600">
-                  {stats.correct}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground mb-2">Incorretas</p>
-                <p className="text-4xl font-bold text-red-600">
-                  {stats.incorrect}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground mb-2">Taxa</p>
-                <p className="text-4xl font-bold text-primary">
-                  {percentage.toFixed(1)}%
-                </p>
-              </div>
+          <div className="grid grid-cols-3 gap-6 py-8 border-y border-gray-100">
+            <div className="space-y-1">
+              <p className="text-sm text-gray-500">Acertos</p>
+              <p className="text-4xl font-bold text-green-600">{stats.correct}</p>
             </div>
-
-            {markedCount > 0 && (
-              <div className="p-4 bg-amber-50 rounded-lg">
-                <p className="text-amber-800">
-                  📌 Você marcou <strong>{markedCount}</strong> questão(ões) para revisão
-                </p>
-              </div>
-            )}
-
-            <div className="space-y-2">
-              {percentage >= 80 && (
-                <p className="text-lg font-semibold text-green-600">
-                  ✓ Excelente desempenho! Continue assim!
-                </p>
-              )}
-              {percentage >= 60 && percentage < 80 && (
-                <p className="text-lg font-semibold text-yellow-600">
-                  ⚠ Bom desempenho. Revise os tópicos com dificuldade.
-                </p>
-              )}
-              {percentage < 60 && (
-                <p className="text-lg font-semibold text-red-600">
-                  ✗ Recomenda-se revisar os conceitos e tentar novamente.
-                </p>
-              )}
+            <div className="space-y-1">
+              <p className="text-sm text-gray-500">Erros</p>
+              <p className="text-4xl font-bold text-red-600">{stats.incorrect}</p>
             </div>
-
-            <div className="flex gap-4 justify-center pt-4">
-              <Button
-                onClick={handleRestart}
-                className="elegant-button"
-              >
-                Novo Simulado
-              </Button>
-              <Button 
-                variant="outline"
-                onClick={() => {
-                  setPageState("quiz");
-                  setCurrentIndex(0);
-                }}
-              >
-                Revisar Respostas
-              </Button>
+            <div className="space-y-1">
+              <p className="text-sm text-gray-500">Aproveitamento</p>
+              <p className="text-4xl font-bold text-[#002b5c]">{percentage.toFixed(1)}%</p>
             </div>
-          </Card>
-        </div>
+          </div>
+
+          <div className="flex gap-4 justify-center">
+            <Button onClick={handleRestart} className="bg-[#002b5c] px-8 py-6">
+              Novo Simulado
+            </Button>
+            <Button variant="outline" onClick={() => { setPageState("quiz"); setCurrentIndex(0); }} className="border-[#002b5c] text-[#002b5c] px-8 py-6">
+              Revisar Questões
+            </Button>
+          </div>
+        </Card>
       </div>
     );
   }
 
   return null;
+}
+
+function ArrowLeft(props: any) {
+  return (
+    <svg
+      {...props}
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="m12 19-7-7 7-7" />
+      <path d="M19 12H5" />
+    </svg>
+  );
 }

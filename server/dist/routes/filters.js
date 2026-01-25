@@ -1,5 +1,5 @@
 import { Router } from "express";
-import pool from "../db/index.js";
+import { pool } from "../db/index.js";
 const router = Router();
 // Função auxiliar para tentar buscar de múltiplas colunas possíveis
 const getDistinct = async (col1, col2) => {
