@@ -521,17 +521,6 @@ const updatePerformance = (tema: string, acertou: boolean) => {
     </div>
   )}
   
-  {!user && (
-    <div className="user-info-panel">
-      <button
-        onClick={() => setLocation('/login')}
-        className="user-action-link flex items-center gap-2"
-      >
-        <LogIn size={16} />
-        Entrar / Cadastrar
-      </button>
-    </div>
-  )}
   
 
           <div className="max-w-6xl mx-auto space-y-8">
