@@ -69,7 +69,7 @@ export default function ErrorNotebook() {
       setErrors(data || []);
 
       // Extrair especialidades únicas
-      const uniqueSpecialties = [...new Set(data?.map((e: ErrorQuestion) => e.specialty))];
+      const uniqueSpecialties = Array.from(new Set(data?.map((e: ErrorQuestion) => e.specialty) || [])) as string[];
       setSpecialties(uniqueSpecialties.filter(Boolean));
     } catch (err) {
       console.error('Erro ao carregar caderno de erros:', err);

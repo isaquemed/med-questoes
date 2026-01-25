@@ -1,5 +1,4 @@
 import express from "express";
-import pool from "../db/index.js";
 import { db } from "../db/index.js";
 import { respostas, desempenhoTemas } from "../db/schema.js";
 import { eq, and } from "drizzle-orm";
