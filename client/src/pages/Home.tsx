@@ -403,9 +403,6 @@ export default function Home() {
                 <Button size="lg" className="bg-[#002b5c] px-8 py-6 text-lg" onClick={() => document.getElementById('filtros')?.scrollIntoView({ behavior: 'smooth' })}>
                   Começar Agora
                 </Button>
-                <Button size="lg" variant="outline" className="border-[#002b5c] text-[#002b5c] px-8 py-6 text-lg">
-                  Ver Planos
-                </Button>
               </div>
             </div>
             <div className="relative hidden lg:block">
@@ -443,7 +440,7 @@ export default function Home() {
             </div>
 
             <Card className="p-8 shadow-xl border-t-4 border-t-[#d4af37]">
-              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
                 <div className="space-y-2">
                   <label className="text-sm font-bold text-gray-700">Banca</label>
                   <Select value={filters.source} onValueChange={(v) => handleFilterChange("source", v)}>
@@ -479,6 +476,19 @@ export default function Home() {
                     <SelectContent>
                       <SelectItem value="all">Todas as áreas</SelectItem>
                       {availableFilters.specialties.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-gray-700">Tópico</label>
+                  <Select value={filters.topic} onValueChange={(v) => handleFilterChange("topic", v)}>
+                    <SelectTrigger className="bg-gray-50">
+                      <SelectValue placeholder="Todos os tópicos" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos os tópicos</SelectItem>
+                      {availableFilters.topics.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
