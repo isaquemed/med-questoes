@@ -1,4 +1,4 @@
-import { mysqlTable, serial, text, varchar, int, boolean, decimal, datetime } from "drizzle-orm/mysql-core";
+import { mysqlTable, serial, text, varchar, int, boolean, decimal, datetime, index } from "drizzle-orm/mysql-core";
 import { sql } from "drizzle-orm";
 export const questions = mysqlTable("questions", {
     id: serial("id").primaryKey(),
@@ -9,13 +9,20 @@ export const questions = mysqlTable("questions", {
     specialty: varchar("specialty", { length: 255 }),
     topic: varchar("topic", { length: 255 }),
     resolution: text("resolution"),
-});
+}, (table) => ({
+    sourceIdx: index("source_idx").on(table.source),
+    specialtyIdx: index("specialty_idx").on(table.specialty),
+    yearIdx: index("year_idx").on(table.year),
+    topicIdx: index("topic_idx").on(table.topic),
+}));
 export const alternatives = mysqlTable("alternatives", {
     id: serial("id").primaryKey(),
     questionId: int("question_id").notNull(),
     letter: varchar("letter", { length: 1 }).notNull(),
     text: text("text").notNull(),
-});
+}, (table) => ({
+    questionIdIdx: index("alt_question_id_idx").on(table.questionId),
+}));
 export const markedQuestions = mysqlTable("marked_questions", {
     id: serial("id").primaryKey(),
     questionId: int("question_id").notNull(),
@@ -42,7 +49,10 @@ export const respostas = mysqlTable("respostas", {
     tempoResposta: int("tempo_resposta"),
     tema: varchar("tema", { length: 100 }),
     dataResposta: datetime("data_resposta").default(sql `CURRENT_TIMESTAMP`),
-});
+}, (table) => ({
+    usuarioIdIdx: index("resp_usuario_id_idx").on(table.usuarioId),
+    questaoIdIdx: index("resp_questao_id_idx").on(table.questaoId),
+}));
 export const desempenhoTemas = mysqlTable("desempenho_temas", {
     id: serial("id").primaryKey(),
     usuarioId: int("usuario_id").notNull(),
