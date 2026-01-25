@@ -5,7 +5,7 @@ import { ProgressBar } from "@/components/ProgressBar";
 import { QuestionCard } from "@/components/QuestionCard";
 import { QuestionNavigation } from "@/components/QuestionNavigation";
 import { useEffect, useState, useCallback } from "react";
-import { Heart, Brain, Stethoscope, Filter, LayoutDashboard, BookOpen, ListChecks, Trophy, Settings } from "lucide-react";
+import { Heart, Brain, Stethoscope, Filter, LayoutDashboard, BookOpen, ListChecks, Trophy, Settings, RotateCcw, Search } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { questionsApi } from "@/lib/api";
 import "@/styles/emed.css";
@@ -44,10 +44,12 @@ export default function Home() {
   const [stats, setStats] = useState({ correct: 0, incorrect: 0 });
   const [questionStatuses, setQuestionStatuses] = useState<QuestionStatus[]>([]);
   
-  const [filters, setFilters] = useState({ source: "all", year: "all", specialty: "all", topic: "all", limit: "10" });
+  const initialFilters = { source: "all", year: "all", specialty: "all", topic: "all", limit: "10" };
+  const [filters, setFilters] = useState(initialFilters);
   const [availableFilters, setAvailableFilters] = useState({ sources: [], years: [], specialties: [], topics: [] });
   const [totalQuestionsCount, setTotalQuestionsCount] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [countLoading, setCountLoading] = useState(false);
   
   const [, setLocation] = useLocation();
   const [user, setUser] = useState(() => {
@@ -59,7 +61,7 @@ export default function Home() {
 
   useEffect(() => {
     fetchFilters();
-    fetchQuestions();
+    updateQuestionCount(filters);
   }, []);
 
   // Efeito para a funcionalidade de grifar
@@ -138,35 +140,25 @@ export default function Home() {
     }
   };
 
-  const fetchQuestions = async (currentFilters = filters) => {
-    setLoading(true);
+  const updateQuestionCount = async (currentFilters: any) => {
+    setCountLoading(true);
     try {
       const params: any = {};
       if (currentFilters.source !== "all") params.source = currentFilters.source;
       if (currentFilters.year !== "all") params.year = currentFilters.year;
       if (currentFilters.specialty !== "all") params.specialty = currentFilters.specialty;
       if (currentFilters.topic !== "all") params.topic = currentFilters.topic;
-      params.limit = parseInt(currentFilters.limit) || 10;
-      params.page = 1;
+      params.limit = 1; // Só queremos o total
+      params.offset = 0;
 
       const response = await questionsApi.getQuestions(params);
       const responseData = response.data || response;
-
-      const questionsList = Array.isArray(responseData.questions) 
-        ? responseData.questions 
-        : (Array.isArray(responseData) ? responseData : []);
-      
-      const total = responseData.pagination?.total || 
-                    responseData.total || 
-                    questionsList.length;
-      
-      setQuestions(questionsList);
+      const total = responseData.pagination?.total || 0;
       setTotalQuestionsCount(total);
     } catch (error) {
-      console.error("Error fetching questions:", error);
-      setQuestions([]);
+      console.error("Error updating count:", error);
     } finally {
-      setLoading(false);
+      setCountLoading(false);
     }
   };
 
@@ -189,7 +181,12 @@ export default function Home() {
     }
     
     setFilters(newFilters);
-    await fetchQuestions(newFilters);
+    updateQuestionCount(newFilters);
+  };
+
+  const handleClearFilters = () => {
+    setFilters(initialFilters);
+    updateQuestionCount(initialFilters);
   };
 
   const handleStartQuiz = async () => {
@@ -197,13 +194,9 @@ export default function Home() {
     setLoading(true);
     try {
       const limit = parseInt(filters.limit) || 10;
-      const params: any = { ...filters, limit, page: 1 };
-      delete params.limit; // questionsApi.getQuestions expects limit in params
+      const params: any = { ...filters, limit, offset: 0 };
       
-      const response = await questionsApi.getQuestions({
-        ...params,
-        limit
-      });
+      const response = await questionsApi.getQuestions(params);
       const responseData = response?.data || response;
       
       let questionsList = Array.isArray(responseData.questions) ? responseData.questions : (Array.isArray(responseData) ? responseData : []);
@@ -433,19 +426,27 @@ export default function Home() {
             </div>
           </div>
 
-          <div id="filtros" className="space-y-8">
-            <div className="text-center space-y-2">
-              <h3 className="text-3xl font-bold text-[#002b5c]">Personalize seu Estudo</h3>
-              <p className="text-gray-500">Selecione os filtros abaixo para gerar sua lista de questões</p>
+          <div id="filtros" className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <h3 className="text-2xl font-bold text-[#002b5c]">Personalize seu Estudo</h3>
+                <p className="text-gray-500 text-sm">Filtre por banca, ano, especialidade ou tema</p>
+              </div>
+              <div className="bg-[#002b5c]/5 px-6 py-3 rounded-2xl border border-[#002b5c]/10 flex items-center gap-3">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <span className="text-[#002b5c] font-bold">
+                  {countLoading ? "Contando..." : `${totalQuestionsCount.toLocaleString()} questões disponíveis`}
+                </span>
+              </div>
             </div>
 
-            <Card className="p-8 shadow-xl border-t-4 border-t-[#d4af37]">
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                <div className="space-y-2">
-                  <label className="text-sm font-bold text-gray-700">Banca</label>
+            <Card className="p-6 shadow-xl border-t-4 border-t-[#d4af37]">
+              <div className="flex flex-wrap items-end gap-4">
+                <div className="flex-1 min-w-[150px] space-y-1.5">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Banca</label>
                   <Select value={filters.source} onValueChange={(v) => handleFilterChange("source", v)}>
-                    <SelectTrigger className="bg-gray-50">
-                      <SelectValue placeholder="Todas as bancas" />
+                    <SelectTrigger className="bg-gray-50 border-gray-200 h-11">
+                      <SelectValue placeholder="Todas" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">Todas as bancas</SelectItem>
@@ -454,11 +455,11 @@ export default function Home() {
                   </Select>
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-sm font-bold text-gray-700">Ano</label>
+                <div className="flex-1 min-w-[120px] space-y-1.5">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Ano</label>
                   <Select value={filters.year} onValueChange={(v) => handleFilterChange("year", v)}>
-                    <SelectTrigger className="bg-gray-50">
-                      <SelectValue placeholder="Todos os anos" />
+                    <SelectTrigger className="bg-gray-50 border-gray-200 h-11">
+                      <SelectValue placeholder="Todos" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">Todos os anos</SelectItem>
@@ -467,11 +468,11 @@ export default function Home() {
                   </Select>
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-sm font-bold text-gray-700">Especialidade</label>
+                <div className="flex-1 min-w-[180px] space-y-1.5">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Especialidade</label>
                   <Select value={filters.specialty} onValueChange={(v) => handleFilterChange("specialty", v)}>
-                    <SelectTrigger className="bg-gray-50">
-                      <SelectValue placeholder="Todas as áreas" />
+                    <SelectTrigger className="bg-gray-50 border-gray-200 h-11">
+                      <SelectValue placeholder="Todas" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">Todas as áreas</SelectItem>
@@ -480,11 +481,11 @@ export default function Home() {
                   </Select>
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-sm font-bold text-gray-700">Tópico</label>
+                <div className="flex-1 min-w-[180px] space-y-1.5">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Tópico</label>
                   <Select value={filters.topic} onValueChange={(v) => handleFilterChange("topic", v)}>
-                    <SelectTrigger className="bg-gray-50">
-                      <SelectValue placeholder="Todos os tópicos" />
+                    <SelectTrigger className="bg-gray-50 border-gray-200 h-11">
+                      <SelectValue placeholder="Todos" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">Todos os tópicos</SelectItem>
@@ -493,26 +494,34 @@ export default function Home() {
                   </Select>
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-sm font-bold text-gray-700">Quantidade</label>
+                <div className="w-24 space-y-1.5">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Qtd</label>
                   <Input 
                     type="number" 
                     value={filters.limit} 
                     onChange={(e) => setFilters(prev => ({ ...prev, limit: e.target.value }))}
-                    className="bg-gray-50"
+                    className="bg-gray-50 border-gray-200 h-11"
                   />
                 </div>
-              </div>
 
-              <div className="flex justify-center">
-                <Button 
-                  size="lg" 
-                  className="bg-[#002b5c] hover:bg-[#001a3a] px-12 py-7 text-xl rounded-xl shadow-lg"
-                  onClick={handleStartQuiz}
-                  disabled={loading}
-                >
-                  {loading ? "Carregando..." : "Gerar Simulado"}
-                </Button>
+                <div className="flex gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="icon"
+                    className="h-11 w-11 border-gray-200 text-gray-500 hover:text-red-500 hover:bg-red-50"
+                    onClick={handleClearFilters}
+                    title="Limpar Filtros"
+                  >
+                    <RotateCcw size={18} />
+                  </Button>
+                  <Button 
+                    className="bg-[#002b5c] hover:bg-[#001a3a] h-11 px-8 font-bold shadow-lg"
+                    onClick={handleStartQuiz}
+                    disabled={loading || totalQuestionsCount === 0}
+                  >
+                    {loading ? "Carregando..." : "Gerar Simulado"}
+                  </Button>
+                </div>
               </div>
             </Card>
           </div>
@@ -527,7 +536,7 @@ export default function Home() {
 
     return (
       <div className="min-h-screen bg-[#f8fafc] py-8">
-        <div className="max-w-7xl mx-auto px-4">
+        <div className="max-w-7xl auto px-4">
           <div className="grid lg:grid-cols-4 gap-8">
             <div className="lg:col-span-3 space-y-6">
               <div className="flex items-center justify-between bg-white p-4 rounded-xl shadow-sm border-l-4 border-l-[#d4af37]">
