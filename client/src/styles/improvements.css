@@ -153,9 +153,7 @@
 }
 
 /* Transições Suaves */
-* {
-  @apply transition-colors duration-200;
-}
+/* Removido seletor universal para evitar conflitos com grifos dinâmicos */
 
 /* Melhorias em Texto */
 .text-truncate {

@@ -100,16 +100,12 @@ export default function Home() {
         // Criar novo grifo
         const span = document.createElement('span');
         span.className = 'highlighted';
-        span.style.backgroundColor = '#ffff00';
-        span.style.color = '#000000';
-        span.style.padding = '2px 0';
-        span.style.borderRadius = '2px';
-        span.style.display = 'inline';
+        // Aplicar estilos inline agressivos para garantir visibilidade imediata
+        span.setAttribute('style', 'background-color: #ffff00 !important; color: #000000 !important; display: inline !important; border-radius: 2px !important; padding: 2px 0 !important;');
 
         try {
           range.surroundContents(span);
         } catch (e) {
-          // Fallback para seleções complexas
           const contents = range.extractContents();
           span.appendChild(contents);
           range.insertNode(span);

@@ -121,10 +121,11 @@ export function QuestionCard({
       </div>
 
       {/* Question Text com Estilo Acadêmico */}
-      <div className="question-text-body prose prose-blue dark:prose-invert max-w-none">
+      <div className="question-text-body prose prose-blue dark:prose-invert max-w-none select-text">
         <div 
           id={`question-content-${question.id}`}
-          className="text-gray-800 dark:text-slate-200 leading-relaxed text-xl font-medium select-text"
+          className="text-gray-800 dark:text-slate-200 leading-relaxed text-xl font-medium select-text pointer-events-auto"
+          style={{ userSelect: 'text', WebkitUserSelect: 'text' }}
           dangerouslySetInnerHTML={{ 
             __html: question.highlights || processText(question.question).replace(/\n/g, '<br/>') 
           }}
