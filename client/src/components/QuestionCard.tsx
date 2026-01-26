@@ -17,6 +17,7 @@ interface Question {
   source?: string;
   year?: number;
   specialty?: string;
+  topic?: string;
   resolution?: string;
   highlights?: string;
 }
@@ -82,56 +83,48 @@ export function QuestionCard({
   };
 
   return (
-    <Card className="elegant-card p-8 space-y-6 border-t-4 border-t-[#d4af37]">
+    <Card className="emed-card p-6 space-y-6">
       {/* Header */}
-      <div className="space-y-2 border-b border-gray-100 pb-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold text-[#002b5c]">
-            {question.source && `[${question.source}${question.year ? ` - ${question.year}` : ""}]`}
+      <div className="flex items-center justify-between border-b border-gray-100 pb-4">
+        <div className="flex flex-col">
+          <span className="text-xs font-bold text-[#c5a059] uppercase tracking-wider mb-1">
+            {question.source || "Residência Médica"} {question.year && `• ${question.year}`}
+          </span>
+          <h2 className="text-lg font-bold text-[#002b5c]">
+            Questão #{question.id}
           </h2>
-          {question.specialty && (
-            <span className="px-3 py-1 bg-[#002b5c]/10 text-[#002b5c] rounded-full text-xs font-bold uppercase tracking-wider">
-              {question.specialty}
-            </span>
-          )}
         </div>
+        {question.specialty && (
+          <span className="px-3 py-1 bg-blue-50 text-[#002b5c] rounded-full text-xs font-bold">
+            {question.specialty}
+          </span>
+        )}
       </div>
 
       {/* Question Text */}
-      <div className="space-y-4">
-        <div className="prose prose-blue max-w-none question-text-body">
-          {question.highlights ? (
-            <div 
-              className="text-lg leading-relaxed text-foreground mb-4"
-              dangerouslySetInnerHTML={{ __html: question.highlights }}
-            />
-          ) : (
-            <ReactMarkdown
-              remarkPlugins={[remarkGfm]}
-              components={{
-                p: ({ children }) => (
-                  <p className="text-lg leading-relaxed text-foreground mb-4">
-                    {children}
-                  </p>
-                ),
-                strong: ({ children }) => (
-                  <strong className="font-bold text-[#002b5c]">{children}</strong>
-                ),
-                em: ({ children }) => (
-                  <em className="italic text-foreground">{children}</em>
-                ),
-                ul: ({ children }) => (
-                  <ul className="list-disc list-inside space-y-2 my-4">{children}</ul>
-                ),
-                ol: ({ children }) => (
-                  <ol className="list-decimal list-inside space-y-2 my-4">{children}</ol>
-                ),
-              }}
-            >
-              {processText(question.question)}
-            </ReactMarkdown>
-          )}
-        </div>
+      <div className="question-text-body prose prose-blue max-w-none">
+        {question.highlights ? (
+          <div 
+            className="text-gray-800 leading-relaxed text-lg"
+            dangerouslySetInnerHTML={{ __html: question.highlights }}
+          />
+        ) : (
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            components={{
+              p: ({ children }) => (
+                <p className="text-gray-800 leading-relaxed text-lg mb-4">
+                  {children}
+                </p>
+              ),
+              strong: ({ children }) => (
+                <strong className="font-bold text-[#002b5c]">{children}</strong>
+              ),
+            }}
+          >
+            {processText(question.question)}
+          </ReactMarkdown>
+        )}
       </div>
 
       {/* Alternatives */}
@@ -148,111 +141,76 @@ export function QuestionCard({
               onClick={() => handleSelectAnswer(alt.letter)}
               disabled={disabled || showResult}
               className={`
-                w-full p-5 rounded-xl border-2 text-left transition-all duration-200
+                w-full p-4 rounded-xl border-2 text-left transition-all duration-200 flex items-start gap-4
                 ${
                   isSelected
                     ? showCorrect
-                      ? "border-green-500 bg-green-50 shadow-sm"
+                      ? "border-green-500 bg-green-50"
                       : showIncorrect
-                        ? "border-red-500 bg-red-50 shadow-sm"
-                        : "border-[#002b5c] bg-[#002b5c]/5 shadow-md"
+                        ? "border-red-500 bg-red-50"
+                        : "border-[#002b5c] bg-[#002b5c]/5"
                     : showCorrect
                       ? "border-green-500 bg-green-50"
-                      : "border-gray-100 hover:border-[#002b5c]/30 hover:bg-gray-50"
+                      : "border-gray-100 hover:border-gray-200 hover:bg-gray-50"
                 }
-                ${disabled || showResult ? "cursor-not-allowed" : "cursor-pointer"}
               `}
             >
-              <div className="flex items-start gap-4">
-                <span className={`
-                  font-bold text-lg min-w-8 h-8 flex items-center justify-center rounded-full
-                  ${isSelected ? "bg-[#002b5c] text-white" : "bg-gray-100 text-gray-500"}
-                `}>
-                  {alt.letter}
-                </span>
-                <div className="flex-1 pt-0.5">
-                  <ReactMarkdown
-                    remarkPlugins={[remarkGfm]}
-                    components={{
-                      p: ({ children }) => (
-                        <span className="text-gray-700 font-medium">{children}</span>
-                      ),
-                    }}
-                  >
-                    {processText(alt.text)}
-                  </ReactMarkdown>
-                </div>
-                {showResult && isAnswerCorrect && (
-                  <CheckCircle2 className="w-6 h-6 text-green-500 flex-shrink-0" />
-                )}
-                {showResult && isSelected && !isCorrect && (
-                  <XCircle className="w-6 h-6 text-red-500 flex-shrink-0" />
-                )}
+              <span className={`
+                font-bold w-8 h-8 flex items-center justify-center rounded-full flex-shrink-0
+                ${isSelected ? "bg-[#002b5c] text-white" : "bg-gray-100 text-gray-500"}
+              `}>
+                {alt.letter}
+              </span>
+              <div className="flex-1 pt-1">
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  components={{
+                    p: ({ children }) => (
+                      <span className="text-gray-700">{children}</span>
+                    ),
+                  }}
+                >
+                  {processText(alt.text)}
+                </ReactMarkdown>
               </div>
+              {showResult && isAnswerCorrect && (
+                <CheckCircle2 className="w-6 h-6 text-green-500 flex-shrink-0" />
+              )}
+              {showResult && isSelected && !isCorrect && (
+                <XCircle className="w-6 h-6 text-red-500 flex-shrink-0" />
+              )}
             </button>
           );
         })}
       </div>
 
-      {/* Result Message and Resolution */}
+      {/* Result and Resolution */}
       {showResult && (
-        <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <div
-            className={`
-              p-4 rounded-xl text-center font-bold text-lg
-              ${isCorrect ? "bg-green-100 text-green-800 border border-green-200" : "bg-red-100 text-red-800 border border-red-200"}
-            `}
-          >
-            {isCorrect ? "✓ Resposta Correta!" : "✗ Resposta Incorreta"}
-            {!isCorrect && (
-              <p className="text-sm mt-2 font-medium">
-                A alternativa correta é a <strong>{question.correctAnswer}</strong>
-              </p>
-            )}
+        <div className="space-y-4 pt-4 border-t border-gray-100 animate-in fade-in duration-500">
+          <div className={`p-4 rounded-lg text-center font-bold ${isCorrect ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}>
+            {isCorrect ? "Resposta Correta!" : `Incorreto. A resposta certa é ${question.correctAnswer}`}
           </div>
 
           {localResolution ? (
-            <div className="p-8 bg-[#002b5c]/5 border-l-4 border-[#d4af37] rounded-r-xl">
-              <h3 className="font-bold text-[#002b5c] mb-4 flex items-center gap-2 text-xl">
-                <Lightbulb className="w-6 h-6 text-[#d4af37]" /> Resolução Comentada
+            <div className="p-6 bg-blue-50 rounded-xl border-l-4 border-[#c5a059]">
+              <h3 className="font-bold text-[#002b5c] mb-3 flex items-center gap-2">
+                <Lightbulb className="w-5 h-5 text-[#c5a059]" /> Resolução Comentada
               </h3>
-              <div className="prose prose-blue max-w-none">
-                <ReactMarkdown
-                  remarkPlugins={[remarkGfm]}
-                  components={{
-                    p: ({ children }) => (
-                      <p className="text-gray-700 leading-relaxed mb-4">{children}</p>
-                    ),
-                    strong: ({ children }) => (
-                      <strong className="font-bold text-[#002b5c]">{children}</strong>
-                    ),
-                    ul: ({ children }) => (
-                      <ul className="list-disc list-inside space-y-2 my-4 text-gray-700">
-                        {children}
-                      </ul>
-                    ),
-                  }}
-                >
+              <div className="prose prose-sm max-w-none text-gray-700">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
                   {processText(localResolution)}
                 </ReactMarkdown>
               </div>
             </div>
           ) : (
-            <div className="p-8 bg-amber-50 border-l-4 border-amber-500 rounded-r-xl flex flex-col items-center gap-4">
-              <div className="text-center">
-                <h3 className="font-bold text-amber-800 mb-2 flex items-center justify-center gap-2 text-lg">
-                  <AlertTriangle className="w-6 h-6" /> Resolução não disponível
-                </h3>
-                <p className="text-amber-900 font-medium">
-                  Deseja que nossa IA gere uma explicação detalhada agora?
-                </p>
-              </div>
+            <div className="p-6 bg-amber-50 rounded-xl border-l-4 border-amber-500 flex flex-col items-center gap-4">
+              <p className="text-amber-800 font-medium text-center">Deseja uma explicação detalhada desta questão?</p>
               <Button 
                 onClick={handleGenerateAI} 
                 disabled={isGenerating}
-                className="bg-[#d4af37] hover:bg-[#b8962d] text-[#002b5c] font-bold px-8 py-6 rounded-xl"
+                className="bg-[#c5a059] hover:bg-[#b08e4d] text-white font-bold"
               >
-                {isGenerating ? "IA Analisando..." : "Gerar Resolução com IA"}
+                {isGenerating ? "Gerando..." : "Gerar Resolução com IA"}
               </Button>
             </div>
           )}
@@ -263,7 +221,7 @@ export function QuestionCard({
         <Button
           onClick={handleSubmit}
           disabled={!selectedAnswer || disabled}
-          className="w-full py-8 text-xl font-bold bg-[#002b5c] hover:bg-[#001a3a] rounded-xl shadow-lg transition-all active:scale-[0.98]"
+          className="w-full py-6 text-lg font-bold bg-[#002b5c] hover:bg-[#001a3a] text-white rounded-xl shadow-md"
         >
           Confirmar Resposta
         </Button>
