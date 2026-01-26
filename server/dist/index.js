@@ -9,7 +9,6 @@ import questionsRoutes from "./routes/questions.js";
 import resolutionsRoutes from "./routes/resolutions.js";
 import userAnswersRoutes from "./routes/userAnswers.js";
 import authRoutes from "./routes/auth.js";
-import performanceRoutes from "./routes/performance.js";
 const app = express();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -46,7 +45,6 @@ app.use("/api/questions", questionsRoutes);
 app.use("/api/resolutions", resolutionsRoutes);
 app.use("/api/user-answers", userAnswersRoutes);
 app.use("/api/auth", authRoutes);
-app.use("/api/performance", performanceRoutes);
 // Servir arquivos estáticos
 app.use(express.static(clientBuildPath));
 // Rota de fallback para o SPA (React)
