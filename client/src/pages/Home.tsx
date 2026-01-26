@@ -77,12 +77,11 @@ export default function Home() {
         const range = selection?.getRangeAt(0);
         if (!range) return;
         
-        const questionTextContainer = document.querySelector('.question-text-body');
+        // Buscar o container interno que realmente contém o texto
+        const questionTextContainer = document.querySelector('.question-text-body > div');
         if (!questionTextContainer || !questionTextContainer.contains(range.commonAncestorContainer)) {
           return;
         }
-        
-        const selectedNode = range.startContainer.parentNode;
         
         // Verificar se já está grifado para remover
         let node: Node | null = range.commonAncestorContainer;
@@ -102,22 +101,22 @@ export default function Home() {
         } else {
           const span = document.createElement('span');
           span.className = 'highlighted';
-          span.style.backgroundColor = '#fef08a';
+          span.style.backgroundColor = '#ffff00'; // Amarelo vibrante
           span.style.color = '#000000';
           span.style.padding = '2px 0';
           span.style.borderRadius = '2px';
+          span.style.display = 'inline';
           
           try {
             range.surroundContents(span);
           } catch(e) {
-            // Fallback para seleções que cruzam múltiplos nós
             const contents = range.extractContents();
             span.appendChild(contents);
             range.insertNode(span);
           }
         }
         
-        // Capturar o HTML grifado
+        // Capturar o HTML grifado do container interno
         const currentHighlights = questionTextContainer.innerHTML;
         setQuestionStatuses(prev => {
           const newStatuses = [...prev];
