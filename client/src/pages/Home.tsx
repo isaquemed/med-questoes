@@ -5,7 +5,7 @@ import { ProgressBar } from "@/components/ProgressBar";
 import { QuestionCard } from "@/components/QuestionCard";
 import { QuestionNavigation } from "@/components/QuestionNavigation";
 import { useEffect, useState, useCallback } from "react";
-import { Brain, Filter, BookOpen, Trophy, LogIn, User, BarChart3, LogOut, Highlighter, Search, ChevronRight, GraduationCap, Target, Zap, Clock } from "lucide-react";
+import { Brain, Filter, BookOpen, Trophy, LogIn, User, BarChart3, LogOut, Highlighter, Search, ChevronRight, GraduationCap, Target, Zap, Clock, RotateCcw, ListChecks } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { questionsApi } from "@/lib/api";
 import "@/styles/emed.css";
