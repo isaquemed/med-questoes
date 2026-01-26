@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ProgressBar } from "@/components/ProgressBar";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { QuestionCard } from "@/components/QuestionCard";
 import { QuestionNavigation } from "@/components/QuestionNavigation";
 import { useEffect, useState, useCallback } from "react";
@@ -337,9 +338,10 @@ export default function Home() {
                       <p className="text-[10px] font-bold text-gray-400 uppercase">Médico(a)</p>
                       <p className="text-sm font-black text-[#002b5c]">{user.nome || user.name}</p>
                     </div>
+<ThemeToggle />
                     <button onClick={handleLogout} className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all">
-                      <LogOut size={18} />
-                    </button>
+	                      <LogOut size={18} />
+	                    </button>
                   </div>
                 </div>
               ) : (
