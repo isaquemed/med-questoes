@@ -613,7 +613,7 @@ export default function Home() {
               </div>
             </Card>
 
-            <Card className="p-8 rounded-[3rem] border-none shadow-2xl bg-white dark:bg-slate-900 group cursor-pointer" onClick={() => setLocation("/ErrorNotebook")}>
+            <Card className="p-8 rounded-[3rem] border-none shadow-2xl bg-white dark:bg-slate-900 group cursor-pointer" onClick={() => setLocation("/errornotebook")}>
               <div className="space-y-6">
                 <div className="w-14 h-14 bg-red-50 dark:bg-red-900/20 rounded-2xl flex items-center justify-center text-red-500">
                   <BookOpen size={28} />
