@@ -1,8 +1,10 @@
 import { Router } from "express";
 import { pool } from "../db/index.js";
 import { authenticateToken } from "../middleware/auth.js";
+import { Pool } from "mysql2/promise";
 
 const router = Router();
+const dbPool = pool as Pool;
 
 /**
  * POST /api/user-answers
@@ -21,8 +23,8 @@ router.post("/", authenticateToken, async (req: any, res: any) => {
 
     const answeredAt = Math.floor(Date.now() / 1000);
 
-    // Usar raw query para inserir
-    await pool.query(
+    // Usar a tabela 'user_answers' que é a que o usuário confirmou existir
+    await dbPool.query(
       `INSERT INTO user_answers (usuario_id, question_id, selected_answer, is_correct, answered_at, tempo_resposta, tema, highlights) 
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       [usuarioId, questionId, selectedAnswer, isCorrect ? 1 : 0, answeredAt, tempoResposta || null, tema || null, highlights || null]
@@ -46,7 +48,7 @@ router.get("/errors", authenticateToken, async (req: any, res: any) => {
   try {
     const usuarioId = req.user?.id;
 
-    const [rows]: [any[], any] = await pool.query(
+    const [rows]: [any[], any] = await dbPool.query(
       `SELECT 
         q.id,
         q.question,
@@ -82,7 +84,7 @@ router.get("/performance", authenticateToken, async (req: any, res: any) => {
     const usuarioId = req.user?.id;
 
     // Total de questões e acertos
-    const [totalStats]: [any[], any] = await pool.query(
+    const [totalStats]: [any[], any] = await dbPool.query(
       `SELECT 
         COUNT(*) as totalQuestions,
         SUM(is_correct) as correctAnswers,
@@ -100,7 +102,7 @@ router.get("/performance", authenticateToken, async (req: any, res: any) => {
     }
 
     // Desempenho por especialidade
-    const [bySpecialty]: [any[], any] = await pool.query(
+    const [bySpecialty]: [any[], any] = await dbPool.query(
       `SELECT 
         q.specialty,
         COUNT(*) as total,
@@ -115,7 +117,7 @@ router.get("/performance", authenticateToken, async (req: any, res: any) => {
     );
 
     // Desempenho por banca
-    const [bySource]: [any[], any] = await pool.query(
+    const [bySource]: [any[], any] = await dbPool.query(
       `SELECT 
         q.source,
         COUNT(*) as total,
@@ -134,14 +136,14 @@ router.get("/performance", authenticateToken, async (req: any, res: any) => {
     const sevenDaysAgo = now - (7 * 24 * 60 * 60);
     const thirtyDaysAgo = now - (30 * 24 * 60 * 60);
 
-    const [last7Days]: [any[], any] = await pool.query(
+    const [last7Days]: [any[], any] = await dbPool.query(
       `SELECT (SUM(is_correct) * 100.0 / COUNT(*)) as accuracy
        FROM user_answers
        WHERE usuario_id = ? AND answered_at >= ?`,
       [usuarioId, sevenDaysAgo]
     );
 
-    const [last30Days]: [any[], any] = await pool.query(
+    const [last30Days]: [any[], any] = await dbPool.query(
       `SELECT (SUM(is_correct) * 100.0 / COUNT(*)) as accuracy
        FROM user_answers
        WHERE usuario_id = ? AND answered_at >= ?`,
@@ -189,7 +191,7 @@ router.delete("/reset", authenticateToken, async (req: any, res: any) => {
   try {
     const usuarioId = req.user?.id;
 
-    await pool.query(
+    await dbPool.query(
       `DELETE FROM user_answers WHERE usuario_id = ?`,
       [usuarioId]
     );

@@ -24,6 +24,7 @@ export interface Question {
   source?: string;
   year?: number;
   specialty?: string;
+  topic?: string;
   resolution?: string;
 }
 
@@ -64,7 +65,6 @@ export default function Home() {
     updateQuestionCount(filters);
   }, []);
 
-  // Efeito para a funcionalidade de grifar
   useEffect(() => {
     if (!highlightsEnabled || pageState !== "quiz") return;
 
@@ -76,7 +76,6 @@ export default function Home() {
         const range = selection?.getRangeAt(0);
         if (!range) return;
         
-        // Alvo específico: o container do texto da questão
         const questionTextContainer = document.querySelector('.question-text-body');
         if (!questionTextContainer || !questionTextContainer.contains(range.commonAncestorContainer)) {
           return;
@@ -85,7 +84,6 @@ export default function Home() {
         const selectedNode = range.startContainer.parentNode;
         
         if (selectedNode instanceof HTMLElement && selectedNode.classList.contains('highlighted')) {
-          // Desgrifar
           const parent = selectedNode.parentNode;
           if (parent) {
             while (selectedNode.firstChild) {
@@ -95,7 +93,6 @@ export default function Home() {
             parent.normalize();
           }
         } else {
-          // Grifar
           const span = document.createElement('span');
           span.className = 'highlighted';
           
@@ -108,7 +105,6 @@ export default function Home() {
           }
         }
         
-        // Salvar APENAS o conteúdo interno do texto da questão
         const currentHighlights = questionTextContainer.innerHTML;
         setQuestionStatuses(prev => {
           const newStatuses = [...prev];
@@ -172,12 +168,13 @@ export default function Home() {
       newFilters.topic = "all";
       try {
         const response = await fetch(`/api/filters/filtered-topics?specialty=${encodeURIComponent(value)}`);
-        if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
-        const result = await response.json();
-        setAvailableFilters(prev => ({
-          ...prev,
-          topics: result.topics || []
-        }));
+        if (response.ok) {
+          const result = await response.json();
+          setAvailableFilters(prev => ({
+            ...prev,
+            topics: result.topics || []
+          }));
+        }
       } catch (err) {
         setAvailableFilters(prev => ({ ...prev, topics: [] }));
       }
@@ -205,7 +202,7 @@ export default function Home() {
       let questionsList = Array.isArray(responseData.questions) ? responseData.questions : (Array.isArray(responseData) ? responseData : []);
       
       if (questionsList.length === 0) {
-        alert("Nenhuma questão encontrada com os filtros atuais!");
+        alert("Nenhuma questão encontrada!");
         setLoading(false);
         return;
       }
@@ -221,7 +218,6 @@ export default function Home() {
       setQuestionStartTime(Date.now());
     } catch (error) {
       console.error("Erro ao iniciar simulado:", error);
-      alert("Erro ao carregar questões. Tente novamente.");
     } finally {
       setLoading(false);
     }
@@ -245,7 +241,7 @@ export default function Home() {
         headers: { Authorization: `Bearer ${token}` }
       });
     } catch (error) {
-      console.error("Erro ao salvar resposta no banco:", error);
+      console.error("Erro ao salvar resposta:", error);
     }
   };
 
@@ -300,9 +296,7 @@ export default function Home() {
     });
   };
 
-  const handleFinishQuiz = () => {
-    setPageState("results");
-  };
+  const handleFinishQuiz = () => setPageState("results");
 
   const handleRestart = () => {
     setPageState("home");
@@ -310,222 +304,186 @@ export default function Home() {
     setCurrentIndex(0);
     setStats({ correct: 0, incorrect: 0 });
     setQuestionStatuses([]);
+    updateQuestionCount(filters);
   };
 
   const handleLogout = () => {
     localStorage.removeItem("medquestoes_user");
     localStorage.removeItem("medquestoes_token");
     setUser(null);
-    setLocation("/");
+    setPageState("home");
   };
 
   const clearHighlights = () => {
-    const questionTextContainer = document.querySelector('.question-text-body');
-    if (questionTextContainer) {
-      const highlights = questionTextContainer.querySelectorAll('.highlighted');
-      highlights.forEach(h => {
-        const parent = h.parentNode;
-        if (parent) {
-          while (h.firstChild) {
-            parent.insertBefore(h.firstChild, h);
-          }
-          parent.removeChild(h);
-          parent.normalize();
+    const highlights = document.querySelectorAll('.highlighted');
+    highlights.forEach(span => {
+      const parent = span.parentNode;
+      if (parent) {
+        while (span.firstChild) {
+          parent.insertBefore(span.firstChild, span);
         }
-      });
-      
-      setQuestionStatuses(prev => {
-        const newStatuses = [...prev];
-        newStatuses[currentIndex] = {
-          ...newStatuses[currentIndex],
-          highlights: undefined
-        };
-        return newStatuses;
-      });
-    }
+        parent.removeChild(span);
+        parent.normalize();
+      }
+    });
   };
 
   if (pageState === "home") {
     return (
-      <div className="min-h-screen bg-background">
-        <nav className="bg-white border-b border-gray-100 sticky top-0 z-50">
-          <div className="max-w-7xl mx-auto px-4 h-20 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-10 h-10 bg-[#002b5c] rounded-lg flex items-center justify-center text-white">
-                <Stethoscope size={24} />
-              </div>
-              <h1 className="text-2xl font-bold text-[#002b5c]">MedQuestões</h1>
-            </div>
-            
-            <div className="flex items-center gap-6">
-              {user ? (
-                <div className="flex items-center gap-4">
-                  <div className="text-right hidden md:block">
-                    <p className="text-sm font-bold text-[#002b5c]">{user.nome}</p>
-                    <p className="text-xs text-gray-500">{user.usuario}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button variant="ghost" size="sm" onClick={() => setLocation('/performance')} className="text-[#002b5c]">
-                      <BarChart3 size={18} className="mr-2" /> Desempenho
-                    </Button>
-                    <Button variant="ghost" size="sm" onClick={() => setLocation('/error-notebook')} className="text-[#002b5c]">
-                      <BookOpen size={18} className="mr-2" /> Erros
-                    </Button>
-                    <Button variant="ghost" size="sm" onClick={handleLogout} className="text-red-500">
-                      <LogOut size={18} />
-                    </Button>
-                  </div>
+      <div className="min-h-screen bg-[#f8fafc]">
+        <main className="container py-10">
+          {user ? (
+            <div className="user-info-panel mb-8">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-[#c5a059] flex items-center justify-center text-white font-bold">
+                  {(user.nome || user.name || "U").charAt(0).toUpperCase()}
                 </div>
-              ) : (
-                <Button onClick={() => setLocation('/login')} className="bg-[#002b5c] hover:bg-[#001a3a]">
-                  <LogIn size={18} className="mr-2" /> Entrar / Cadastrar
-                </Button>
-              )}
-            </div>
-          </div>
-        </nav>
-
-        <main className="max-w-7xl mx-auto px-4 py-12">
-          <div className="grid lg:grid-cols-2 gap-12 items-center mb-16">
-            <div className="space-y-6">
-              <h2 className="text-5xl font-extrabold text-[#002b5c] leading-tight">
-                Sua aprovação na <span className="text-[#d4af37]">Residência Médica</span> começa aqui.
-              </h2>
-              <p className="text-xl text-gray-600">
-                Plataforma inteligente de questões com resoluções comentadas por IA e análise de desempenho detalhada.
-              </p>
+                <div>
+                  <p className="text-sm text-gray-500">Bem-vindo(a),</p>
+                  <p className="font-bold text-[#002b5c]">{user.nome || user.name}</p>
+                </div>
+              </div>
               <div className="flex gap-4">
-                <Button size="lg" className="bg-[#002b5c] px-8 py-6 text-lg" onClick={() => document.getElementById('filtros')?.scrollIntoView({ behavior: 'smooth' })}>
-                  Começar Agora
+                <button onClick={() => setLocation('/performance')} className="user-action-link flex items-center gap-1">
+                  <BarChart3 size={14} /> Desempenho
+                </button>
+                <button onClick={() => setLocation('/error-notebook')} className="user-action-link flex items-center gap-1">
+                  <BookOpen size={14} /> Erros
+                </button>
+                <button onClick={handleLogout} className="user-action-link text-destructive flex items-center gap-1">
+                  <LogOut size={14} /> Sair
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="user-info-panel mb-8">
+              <div className="flex items-center gap-2">
+                <User size={16} className="text-gray-400" />
+                <span className="text-sm font-medium text-gray-500">Acesse sua conta para salvar seu progresso</span>
+              </div>
+              <button onClick={() => setLocation('/login')} className="user-action-link flex items-center gap-1 font-bold text-[#002b5c]">
+                <LogIn size={14} /> Entrar / Cadastrar
+              </button>
+            </div>
+          )}
+
+          <div className="max-w-6xl mx-auto space-y-8">
+            <header className="flex justify-between items-end">
+              <div>
+                <h2 className="text-3xl font-bold text-[#002b5c]">Banco de Questões</h2>
+                <p className="text-gray-500">Crie sua lista personalizada de estudos</p>
+              </div>
+              <div className="text-sm text-gray-400">
+                {countLoading ? "Contando..." : `${totalQuestionsCount} questões encontradas`}
+              </div>
+            </header>
+
+            <Card className="emed-card overflow-hidden">
+              <div className="bg-gray-50 px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                <div className="flex items-center gap-2 font-semibold text-[#002b5c]">
+                  <Filter size={18} /> Filtros Avançados
+                </div>
+                <Button variant="ghost" size="sm" className="text-gray-400" onClick={handleClearFilters}>
+                  Limpar Filtros
                 </Button>
               </div>
-            </div>
-            <div className="relative hidden lg:block">
-              <div className="absolute -top-4 -left-4 w-72 h-72 bg-[#d4af37]/10 rounded-full blur-3xl"></div>
-              <div className="absolute -bottom-4 -right-4 w-72 h-72 bg-[#002b5c]/10 rounded-full blur-3xl"></div>
-              <Card className="relative p-8 border-none shadow-2xl bg-white/80 backdrop-blur-sm">
-                <div className="space-y-4">
-                  <div className="flex items-center gap-4 p-4 bg-white rounded-xl shadow-sm">
-                    <div className="w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center">
-                      <Trophy size={24} />
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Taxa de Acerto</p>
-                      <p className="text-xl font-bold text-[#002b5c]">84.5%</p>
-                    </div>
+              <div className="p-8 bg-white">
+                <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-gray-600">Banca</label>
+                    <Select value={filters.source} onValueChange={(v) => handleFilterChange("source", v)}>
+                      <SelectTrigger className="bg-gray-50 border-gray-200">
+                        <SelectValue placeholder="Todas as bancas" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todas as bancas</SelectItem>
+                        {availableFilters.sources.map((s: string) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
                   </div>
-                  <div className="flex items-center gap-4 p-4 bg-white rounded-xl shadow-sm">
-                    <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center">
-                      <ListChecks size={24} />
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Questões Respondidas</p>
-                      <p className="text-xl font-bold text-[#002b5c]">1,240</p>
-                    </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-gray-600">Ano</label>
+                    <Select value={filters.year} onValueChange={(v) => handleFilterChange("year", v)}>
+                      <SelectTrigger className="bg-gray-50 border-gray-200">
+                        <SelectValue placeholder="Todos os anos" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todos os anos</SelectItem>
+                        {availableFilters.years.map((y: any) => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-gray-600">Área / Especialidade</label>
+                    <Select value={filters.specialty} onValueChange={(v) => handleFilterChange("specialty", v)}>
+                      <SelectTrigger className="bg-gray-50 border-gray-200">
+                        <SelectValue placeholder="Todas as áreas" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todas as áreas</SelectItem>
+                        {availableFilters.specialties.map((s: string) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-gray-600">Tema Específico</label>
+                    <Select value={filters.topic} onValueChange={(v) => handleFilterChange("topic", v)}>
+                      <SelectTrigger className="bg-gray-50 border-gray-200">
+                        <SelectValue placeholder="Todos os temas" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todos os temas</SelectItem>
+                        {availableFilters.topics.map((t: any) => <SelectItem key={t} value={String(t)}>{t}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-gray-600">Qtd. Questões</label>
+                    <Input 
+                      type="number" 
+                      min="1" 
+                      value={filters.limit} 
+                      onChange={(e) => setFilters(prev => ({ ...prev, limit: e.target.value }))}
+                      className="bg-gray-50 border-gray-200"
+                    />
                   </div>
                 </div>
-              </Card>
-            </div>
-          </div>
-
-          <div id="filtros" className="space-y-6">
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <h3 className="text-2xl font-bold text-[#002b5c]">Personalize seu Estudo</h3>
-                <p className="text-gray-500 text-sm">Filtre por banca, ano, especialidade ou tema</p>
-              </div>
-              <div className="bg-[#002b5c]/5 px-6 py-3 rounded-2xl border border-[#002b5c]/10 flex items-center gap-3">
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                <span className="text-[#002b5c] font-bold">
-                  {countLoading ? "Contando..." : `${totalQuestionsCount.toLocaleString()} questões disponíveis`}
-                </span>
-              </div>
-            </div>
-
-            <Card className="p-6 shadow-xl border-t-4 border-t-[#d4af37]">
-              <div className="flex flex-wrap items-end gap-4">
-                <div className="flex-1 min-w-[150px] space-y-1.5">
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Banca</label>
-                  <Select value={filters.source} onValueChange={(v) => handleFilterChange("source", v)}>
-                    <SelectTrigger className="bg-gray-50 border-gray-200 h-11">
-                      <SelectValue placeholder="Todas" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todas as bancas</SelectItem>
-                      {availableFilters.sources.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="flex-1 min-w-[120px] space-y-1.5">
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Ano</label>
-                  <Select value={filters.year} onValueChange={(v) => handleFilterChange("year", v)}>
-                    <SelectTrigger className="bg-gray-50 border-gray-200 h-11">
-                      <SelectValue placeholder="Todos" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todos os anos</SelectItem>
-                      {availableFilters.years.map((y) => <SelectItem key={String(y)} value={String(y)}>{y}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="flex-1 min-w-[180px] space-y-1.5">
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Especialidade</label>
-                  <Select value={filters.specialty} onValueChange={(v) => handleFilterChange("specialty", v)}>
-                    <SelectTrigger className="bg-gray-50 border-gray-200 h-11">
-                      <SelectValue placeholder="Todas" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todas as áreas</SelectItem>
-                      {availableFilters.specialties.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="flex-1 min-w-[180px] space-y-1.5">
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Tópico</label>
-                  <Select value={filters.topic} onValueChange={(v) => handleFilterChange("topic", v)}>
-                    <SelectTrigger className="bg-gray-50 border-gray-200 h-11">
-                      <SelectValue placeholder="Todos" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todos os tópicos</SelectItem>
-                      {availableFilters.topics.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="w-24 space-y-1.5">
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Qtd</label>
-                  <Input 
-                    type="number" 
-                    value={filters.limit} 
-                    onChange={(e) => setFilters(prev => ({ ...prev, limit: e.target.value }))}
-                    className="bg-gray-50 border-gray-200 h-11"
-                  />
-                </div>
-
-                <div className="flex gap-2">
+                <div className="mt-10 flex justify-center">
                   <Button 
-                    variant="outline" 
-                    size="icon"
-                    className="h-11 w-11 border-gray-200 text-gray-500 hover:text-red-500 hover:bg-red-50"
-                    onClick={handleClearFilters}
-                    title="Limpar Filtros"
-                  >
-                    <RotateCcw size={18} />
-                  </Button>
-                  <Button 
-                    className="bg-[#002b5c] hover:bg-[#001a3a] h-11 px-8 font-bold shadow-lg"
+                    size="lg" 
+                    className="emed-button-primary px-20 py-8 text-xl rounded-xl shadow-xl"
                     onClick={handleStartQuiz}
-                    disabled={loading || totalQuestionsCount === 0}
+                    disabled={loading}
                   >
-                    {loading ? "Carregando..." : "Gerar Simulado"}
+                    {loading ? "Preparando..." : "Gerar Lista de Questões"}
                   </Button>
                 </div>
               </div>
             </Card>
+
+            <div className="grid md:grid-cols-3 gap-6">
+              <Card className="emed-card p-6 flex items-start gap-4">
+                <div className="p-3 bg-blue-50 rounded-lg text-[#002b5c]"><Brain size={24} /></div>
+                <div>
+                  <h4 className="font-bold text-[#002b5c]">Questões Comentadas</h4>
+                  <p className="text-sm text-gray-500">Milhares de questões com explicações detalhadas.</p>
+                </div>
+              </Card>
+              <Card className="emed-card p-6 flex items-start gap-4">
+                <div className="p-3 bg-amber-50 rounded-lg text-[#c5a059]"><Trophy size={24} /></div>
+                <div>
+                  <h4 className="font-bold text-[#002b5c]">Ranking Nacional</h4>
+                  <p className="text-sm text-gray-500">Compare seu desempenho com outros alunos.</p>
+                </div>
+              </Card>
+              <Card className="emed-card p-6 flex items-start gap-4">
+                <div className="p-3 bg-green-50 rounded-lg text-green-600"><ListChecks size={24} /></div>
+                <div>
+                  <h4 className="font-bold text-[#002b5c]">Simulados Inéditos</h4>
+                  <p className="text-sm text-gray-500">Provas criadas por nossos especialistas.</p>
+                </div>
+              </Card>
+            </div>
           </div>
         </main>
       </div>
@@ -538,36 +496,27 @@ export default function Home() {
 
     return (
       <div className="min-h-screen bg-[#f8fafc] py-8">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="grid lg:grid-cols-4 gap-8">
+        <div className="container max-w-7xl">
+          <div className="grid lg:grid-cols-4 gap-6">
             <div className="lg:col-span-3 space-y-6">
-              <div className="flex items-center justify-between bg-white p-4 rounded-xl shadow-sm border-l-4 border-l-[#d4af37]">
-                <Button variant="ghost" onClick={() => setPageState("home")} className="text-[#002b5c]">
-                  <ArrowLeft className="mr-2 w-4 h-4" /> Sair do Simulado
-                </Button>
-                <div className="flex items-center gap-4">
-                  <Button variant="outline" onClick={clearHighlights} className="text-[#002b5c] border-[#002b5c]">
-                    <Highlighter className="mr-2 w-4 h-4" /> Limpar Grifos
-                  </Button>
-                  <Button onClick={handleFinishQuiz} className="bg-[#002b5c]">
-                    Finalizar
-                  </Button>
-                </div>
-              </div>
-
               {currentQuestion && (
                 <QuestionCard
                   key={currentQuestion.id}
-                  question={{
-                    ...currentQuestion,
-                    highlights: currentStatus?.highlights
-                  }}
+                  question={currentQuestion}
                   onAnswer={handleAnswer}
                   initialAnswer={currentStatus?.selectedAnswer}
                 />
               )}
+              <div className="flex gap-4 justify-between">
+                <Button variant="outline" onClick={() => setPageState("home")}>Voltar ao Início</Button>
+                <div className="flex gap-2">
+                  <Button variant="outline" onClick={clearHighlights} className="flex items-center gap-2">
+                    <Highlighter size={16} /> Limpar Grifos
+                  </Button>
+                  <Button onClick={handleFinishQuiz} className="elegant-button">Finalizar Simulado</Button>
+                </div>
+              </div>
             </div>
-
             <div className="space-y-6">
               <QuestionNavigation
                 currentIndex={currentIndex}
@@ -578,7 +527,6 @@ export default function Home() {
                 onPrevious={handlePrevious}
                 onNext={handleNext}
               />
-
               <ProgressBar
                 current={currentIndex + 1}
                 total={questions.length}
@@ -597,63 +545,24 @@ export default function Home() {
     const percentage = totalAnswered > 0 ? (stats.correct / totalAnswered) * 100 : 0;
 
     return (
-      <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center p-4">
-        <Card className="max-w-2xl w-full p-12 text-center space-y-8 shadow-2xl border-t-8 border-t-[#002b5c]">
-          <div className="space-y-2">
-            <div className="w-20 h-20 bg-[#d4af37]/10 text-[#d4af37] rounded-full flex items-center justify-center mx-auto mb-4">
-              <Trophy size={40} />
-            </div>
+      <div className="min-h-screen bg-[#f8fafc] py-8">
+        <div className="container max-w-2xl">
+          <Card className="elegant-card p-12 text-center space-y-8">
             <h1 className="text-4xl font-bold text-[#002b5c]">Simulado Concluído!</h1>
-            <p className="text-gray-500">Confira seu desempenho detalhado</p>
-          </div>
-
-          <div className="grid grid-cols-3 gap-6 py-8 border-y border-gray-100">
-            <div className="space-y-1">
-              <p className="text-sm text-gray-500">Acertos</p>
-              <p className="text-4xl font-bold text-green-600">{stats.correct}</p>
+            <div className="grid grid-cols-3 gap-4 py-8 border-y border-gray-100">
+              <div><p className="text-sm text-gray-500 mb-2">Corretas</p><p className="text-4xl font-bold text-green-600">{stats.correct}</p></div>
+              <div><p className="text-sm text-gray-500 mb-2">Incorretas</p><p className="text-4xl font-bold text-red-600">{stats.incorrect}</p></div>
+              <div><p className="text-sm text-gray-500 mb-2">Taxa</p><p className="text-4xl font-bold text-[#002b5c]">{percentage.toFixed(1)}%</p></div>
             </div>
-            <div className="space-y-1">
-              <p className="text-sm text-gray-500">Erros</p>
-              <p className="text-4xl font-bold text-red-600">{stats.incorrect}</p>
+            <div className="flex gap-4 justify-center pt-4">
+              <Button onClick={handleRestart} className="elegant-button">Novo Simulado</Button>
+              <Button variant="outline" onClick={() => { setPageState("quiz"); setCurrentIndex(0); }}>Revisar Respostas</Button>
             </div>
-            <div className="space-y-1">
-              <p className="text-sm text-gray-500">Aproveitamento</p>
-              <p className="text-4xl font-bold text-[#002b5c]">{percentage.toFixed(1)}%</p>
-            </div>
-          </div>
-
-          <div className="flex gap-4 justify-center">
-            <Button onClick={handleRestart} className="bg-[#002b5c] px-8 py-6">
-              Novo Simulado
-            </Button>
-            <Button variant="outline" onClick={() => { setPageState("quiz"); setCurrentIndex(0); }} className="border-[#002b5c] text-[#002b5c] px-8 py-6">
-              Revisar Questões
-            </Button>
-          </div>
-        </Card>
+          </Card>
+        </div>
       </div>
     );
   }
 
   return null;
-}
-
-function ArrowLeft(props: any) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="m12 19-7-7 7-7" />
-      <path d="M19 12H5" />
-    </svg>
-  );
 }
