@@ -36,7 +36,7 @@ export const resolutions = mysqlTable("resolutions", {
 });
 export const usuarios = mysqlTable("usuarios", {
     id: serial("id").primaryKey(),
-    email: varchar("email", { length: 255 }).notNull().unique(),
+    usuario: varchar("usuario", { length: 255 }).notNull().unique(),
     senha: varchar("senha", { length: 255 }).notNull(),
     nome: varchar("nome", { length: 100 }).notNull(),
     dataCadastro: datetime("data_cadastro").default(sql `CURRENT_TIMESTAMP`),
@@ -50,13 +50,11 @@ export const userAnswers = mysqlTable("user_answers", {
     answeredAt: int("answered_at").notNull(),
     tempoResposta: int("tempo_resposta"),
     tema: varchar("tema", { length: 100 }),
-    highlights: text("highlights"), // Novo campo para salvar grifos
+    highlights: text("highlights"),
 }, (table) => ({
     usuarioIdIdx: index("ua_usuario_id_idx").on(table.usuarioId),
     questionIdIdx: index("ua_question_id_idx").on(table.questionId),
 }));
-// Mantendo 'respostas' e 'desempenho_temas' para compatibilidade se necessário, 
-// mas focaremos em 'user_answers' para o novo dashboard.
 export const respostas = mysqlTable("respostas", {
     id: serial("id").primaryKey(),
     usuarioId: int("usuario_id").notNull(),

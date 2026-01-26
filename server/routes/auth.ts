@@ -1,40 +1,45 @@
-import express from "express";
+import { Router } from "express";
 import { db } from "../db/index.js";
 import { usuarios } from "../db/schema.js";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
-const router = express.Router();
+const router = Router();
 
 // Registro de usuário
 router.post("/register", async (req: any, res: any) => {
   try {
-    const { nome, email, senha } = req.body;
+    const { nome, usuario, senha } = req.body;
+
+    if (!nome || !usuario || !senha) {
+      return res.status(400).json({ error: "Todos os campos são obrigatórios" });
+    }
 
     // Verificar se o usuário já existe
     const existingUser = await db
       .select()
       .from(usuarios)
-      .where(eq(usuarios.email, email))
+      .where(eq(usuarios.usuario, usuario))
       .limit(1);
 
     if (existingUser.length > 0) {
-      return res.status(400).json({ error: "E-mail já cadastrado" });
+      return res.status(400).json({ error: "Nome de usuário já cadastrado" });
     }
 
     const hashedPassword = await bcrypt.hash(senha, 10);
 
     // Inserir novo usuário
-    const [newUser]: any = await db.insert(usuarios).values({
-      email,
+    const [result]: any = await db.insert(usuarios).values({
+      usuario,
       senha: hashedPassword,
       nome,
-      dataCadastro: new Date(),
     });
 
+    const userId = result.insertId;
+
     const token = jwt.sign(
-      { id: newUser.insertId, email },
+      { id: userId, usuario },
       process.env.JWT_SECRET || "sua-chave-secreta",
       { expiresIn: "7d" }
     );
@@ -42,9 +47,9 @@ router.post("/register", async (req: any, res: any) => {
     res.status(201).json({
       token,
       user: {
-        id: newUser.insertId,
+        id: userId,
         nome,
-        email,
+        usuario,
       },
     });
   } catch (error: any) {
@@ -56,13 +61,17 @@ router.post("/register", async (req: any, res: any) => {
 // Login de usuário
 router.post("/login", async (req: any, res: any) => {
   try {
-    const { email, senha } = req.body;
+    const { usuario, senha } = req.body;
+
+    if (!usuario || !senha) {
+      return res.status(400).json({ error: "Usuário e senha são obrigatórios" });
+    }
 
     // Buscar usuário
     const [user] = await db
       .select()
       .from(usuarios)
-      .where(eq(usuarios.email, email))
+      .where(eq(usuarios.usuario, usuario))
       .limit(1);
 
     if (!user) {
@@ -77,7 +86,7 @@ router.post("/login", async (req: any, res: any) => {
 
     // Gerar token JWT
     const token = jwt.sign(
-      { id: user.id, email: user.email },
+      { id: user.id, usuario: user.usuario },
       process.env.JWT_SECRET || "sua-chave-secreta",
       { expiresIn: "7d" }
     );
@@ -87,7 +96,7 @@ router.post("/login", async (req: any, res: any) => {
       user: {
         id: user.id,
         nome: user.nome,
-        email: user.email,
+        usuario: user.usuario,
       },
     });
   } catch (error: any) {

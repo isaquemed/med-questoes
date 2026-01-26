@@ -18,14 +18,14 @@ export default function Login() {
     setSuccess("");
 
     const formData = new FormData(e.currentTarget);
-    const email = formData.get("email") as string;
+    const usuario = formData.get("usuario") as string;
     const password = formData.get("password") as string;
 
     try {
       const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, senha: password }),
+        body: JSON.stringify({ usuario, senha: password }),
       });
 
       const data = await response.json();
@@ -56,7 +56,7 @@ export default function Login() {
 
     const formData = new FormData(e.currentTarget);
     const name = formData.get("name") as string;
-    const email = formData.get("email") as string;
+    const usuario = formData.get("usuario") as string;
     const password = formData.get("password") as string;
     const confirmPassword = formData.get("confirmPassword") as string;
 
@@ -70,7 +70,7 @@ export default function Login() {
       const response = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nome: name, email, senha: password }),
+        body: JSON.stringify({ nome: name, usuario, senha: password }),
       });
 
       const data = await response.json();
@@ -134,12 +134,12 @@ export default function Login() {
           {activeTab === 'login' ? (
             <form onSubmit={handleLogin} className="space-y-4">
               <div className="space-y-2">
-                <label className="text-xs font-bold text-gray-500 uppercase">E-mail</label>
+                <label className="text-xs font-bold text-gray-500 uppercase">Usuário</label>
                 <input
                   className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#002b5c] transition-all"
-                  type="email"
-                  name="email"
-                  placeholder="seu@email.com"
+                  type="text"
+                  name="usuario"
+                  placeholder="Seu nome de usuário"
                   required
                   disabled={isLoading}
                 />
@@ -177,12 +177,12 @@ export default function Login() {
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-xs font-bold text-gray-500 uppercase">E-mail</label>
+                <label className="text-xs font-bold text-gray-500 uppercase">Usuário</label>
                 <input
                   className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#002b5c] transition-all"
-                  type="email"
-                  name="email"
-                  placeholder="seu@email.com"
+                  type="text"
+                  name="usuario"
+                  placeholder="Escolha um nome de usuário"
                   required
                   disabled={isLoading}
                 />

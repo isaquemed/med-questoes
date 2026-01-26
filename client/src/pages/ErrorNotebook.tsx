@@ -119,6 +119,12 @@ export default function ErrorNotebook() {
             </div>
           </div>
           <div className="flex items-center gap-4">
+            {user && (
+              <div className="text-right hidden sm:block">
+                <p className="text-sm font-bold text-[#002b5c]">{user.nome}</p>
+                <p className="text-xs text-gray-500">{user.usuario}</p>
+              </div>
+            )}
             <Button variant="ghost" size="sm" onClick={handleLogout} className="text-red-500">
               <LogOut size={18} />
             </Button>

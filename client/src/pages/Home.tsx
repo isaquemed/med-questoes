@@ -362,7 +362,7 @@ export default function Home() {
                 <div className="flex items-center gap-4">
                   <div className="text-right hidden md:block">
                     <p className="text-sm font-bold text-[#002b5c]">{user.nome}</p>
-                    <p className="text-xs text-gray-500">{user.email}</p>
+                    <p className="text-xs text-gray-500">{user.usuario}</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <Button variant="ghost" size="sm" onClick={() => setLocation('/performance')} className="text-[#002b5c]">

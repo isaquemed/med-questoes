@@ -19,4 +19,4 @@ CREATE INDEX idx_user_answers_answered_at ON user_answers(answered_at);
 CREATE INDEX idx_resolutions_question_id ON resolutions(question_id);
 
 -- Índices para usuários
-CREATE INDEX idx_usuarios_email ON usuarios(email);
+CREATE UNIQUE INDEX idx_usuarios_usuario ON usuarios(usuario);
