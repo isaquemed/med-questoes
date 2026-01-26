@@ -7,50 +7,12 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1" />
     <title>Simulado Residência Médica</title>    
-    <!-- THIS IS THE START OF A COMMENT BLOCK, BLOCK TO BE DELETED: Google Fonts here, example:
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-    THIS IS THE END OF A COMMENT BLOCK, BLOCK TO BE DELETED -->
     <script type="module" crossorigin src="/assets/index-DqyXCNY8.js"></script>
     <link rel="stylesheet" crossorigin href="/assets/index-CBxB7hlC.css">
   </head>
 
   <body>
     <div id="root"></div>
-<!-- Adicione este div para o usuário logado -->
-<div id="user-info" style="position: fixed; top: 10px; right: 10px; z-index: 1000;"></div>
-
-<script>
-    // Verificar se o usuário está logado
-    document.addEventListener('DOMContentLoaded', function() {
-        const user = JSON.parse(localStorage.getItem('user') || 'null');
-        if (user) {
-            const userInfo = document.getElementById('user-info');
-            userInfo.innerHTML = `
-                <div style="background: white; padding: 10px; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
-                    <span>Olá, ${user.nome}!</span>
-                    <a href="performance.html" style="margin-left: 10px; color: #007bff;">Desempenho</a>
-                    <button onclick="logout()" style="margin-left: 10px; padding: 5px 10px; background: #dc3545; color: white; border: none; border-radius: 3px; cursor: pointer;">Sair</button>
-                </div>
-            `;
-        } else {
-            const userInfo = document.getElementById('user-info');
-            userInfo.innerHTML = `
-                <div style="background: white; padding: 10px; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
-                    <a href="login.html" style="color: #007bff;">Login/Cadastro</a>
-                </div>
-            `;
-        }
-    });
-
-    function logout() {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        window.location.reload();
-    }
-</script>
-
-      </body>
+  </body>
 
 </html>
