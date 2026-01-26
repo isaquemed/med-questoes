@@ -11,6 +11,7 @@ interface ErrorQuestion {
   correctAnswer: string;
   selectedAnswer: string;
   specialty: string;
+  topic: string;
   source: string;
   year: number;
   answeredAt: number;
@@ -25,7 +26,9 @@ export default function ErrorNotebook() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedSpecialty, setSelectedSpecialty] = useState('all');
+  const [selectedTopic, setSelectedTopic] = useState('all');
   const [specialties, setSpecialties] = useState<string[]>([]);
+  const [topics, setTopics] = useState<string[]>([]);
 
   useEffect(() => {
     loadErrorNotebook();
@@ -33,7 +36,7 @@ export default function ErrorNotebook() {
 
   useEffect(() => {
     filterErrors();
-  }, [selectedSpecialty, errors]);
+  }, [selectedSpecialty, selectedTopic, errors]);
 
   const loadErrorNotebook = async () => {
     try {
@@ -70,6 +73,15 @@ export default function ErrorNotebook() {
 
       const uniqueSpecialties = Array.from(new Set(data?.map((e: ErrorQuestion) => e.specialty) || [])) as string[];
       setSpecialties(uniqueSpecialties.filter(Boolean));
+      
+      // Inicializar tópicos se houver especialidade selecionada
+      if (selectedSpecialty !== 'all') {
+        const filteredBySpec = data?.filter((e: ErrorQuestion) => e.specialty === selectedSpecialty) || [];
+        const uniqueTopics = Array.from(new Set(filteredBySpec.map((e: ErrorQuestion) => e.topic).filter(Boolean))) as string[];
+        setTopics(uniqueTopics);
+      } else {
+        setTopics([]);
+      }
     } catch (err) {
       console.error('Erro ao carregar caderno de erros:', err);
       setError('Erro ao carregar dados');
@@ -79,10 +91,29 @@ export default function ErrorNotebook() {
   };
 
   const filterErrors = () => {
-    if (selectedSpecialty === 'all') {
-      setFilteredErrors(errors);
+    let filtered = [...errors];
+    
+    if (selectedSpecialty !== 'all') {
+      filtered = filtered.filter(e => e.specialty === selectedSpecialty);
+    }
+    
+    if (selectedTopic !== 'all') {
+      filtered = filtered.filter(e => e.topic === selectedTopic);
+    }
+    
+    setFilteredErrors(filtered);
+  };
+
+  const handleSpecialtyChange = (value: string) => {
+    setSelectedSpecialty(value);
+    setSelectedTopic('all'); // Resetar tópico ao mudar especialidade
+    
+    if (value === 'all') {
+      setTopics([]);
     } else {
-      setFilteredErrors(errors.filter(e => e.specialty === selectedSpecialty));
+      const filteredBySpec = errors.filter(e => e.specialty === value);
+      const uniqueTopics = Array.from(new Set(filteredBySpec.map(e => e.topic).filter(Boolean))) as string[];
+      setTopics(uniqueTopics);
     }
   };
 
@@ -141,27 +172,49 @@ export default function ErrorNotebook() {
           </Card>
 
           <Card className="p-6 shadow-sm md:col-span-3 flex flex-col md:flex-row items-center gap-4">
-            <div className="flex items-center gap-2 text-[#002b5c] font-bold whitespace-nowrap">
-              <Filter size={18} /> Filtrar por Área:
+            <div className="flex flex-col md:flex-row items-center gap-4 w-full">
+              <div className="flex items-center gap-2 text-[#002b5c] font-bold whitespace-nowrap">
+                <Filter size={18} /> Filtros:
+              </div>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
+                <Select value={selectedSpecialty} onValueChange={handleSpecialtyChange}>
+                  <SelectTrigger className="bg-gray-50 border-gray-200">
+                    <SelectValue placeholder="Todas as especialidades" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas as especialidades</SelectItem>
+                    {specialties.map(spec => (
+                      <SelectItem key={spec} value={spec}>{spec}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Select 
+                  value={selectedTopic} 
+                  onValueChange={setSelectedTopic}
+                  disabled={selectedSpecialty === 'all' || topics.length === 0}
+                >
+                  <SelectTrigger className="bg-gray-50 border-gray-200">
+                    <SelectValue placeholder={selectedSpecialty === 'all' ? "Selecione uma área primeiro" : "Todos os temas"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos os temas</SelectItem>
+                    {topics.map(topic => (
+                      <SelectItem key={topic} value={topic}>{topic}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <Button
+                variant="outline"
+                onClick={loadErrorNotebook}
+                className="border-[#002b5c] text-[#002b5c] whitespace-nowrap"
+              >
+                <RefreshCw className="w-4 h-4 mr-2" /> Atualizar
+              </Button>
             </div>
-            <Select value={selectedSpecialty} onValueChange={setSelectedSpecialty}>
-              <SelectTrigger className="w-full md:w-72 bg-gray-50 border-gray-200">
-                <SelectValue placeholder="Todas as especialidades" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas as especialidades</SelectItem>
-                {specialties.map(spec => (
-                  <SelectItem key={spec} value={spec}>{spec}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Button
-              variant="outline"
-              onClick={loadErrorNotebook}
-              className="ml-auto border-[#002b5c] text-[#002b5c]"
-            >
-              <RefreshCw className="w-4 h-4 mr-2" /> Atualizar
-            </Button>
           </Card>
         </div>
 
@@ -189,6 +242,11 @@ export default function ErrorNotebook() {
                   <span className="px-3 py-1 bg-[#002b5c]/10 text-[#002b5c] rounded-full text-[10px] font-black uppercase tracking-widest">
                     {err.specialty}
                   </span>
+                  {err.topic && (
+                    <span className="px-3 py-1 bg-amber-50 text-amber-600 rounded-full text-[10px] font-black uppercase tracking-widest">
+                      {err.topic}
+                    </span>
+                  )}
                   <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-[10px] font-black uppercase tracking-widest">
                     {err.source} {err.year}
                   </span>

@@ -55,6 +55,7 @@ router.get("/errors", authenticateToken, async (req: any, res: any) => {
         q.correct_answer as correctAnswer,
         ua.selected_answer as selectedAnswer,
         q.specialty,
+        q.topic,
         q.source,
         q.year,
         ua.answered_at as answeredAt,
@@ -62,7 +63,7 @@ router.get("/errors", authenticateToken, async (req: any, res: any) => {
       FROM user_answers ua
       JOIN questions q ON ua.question_id = q.id
       WHERE ua.usuario_id = ? AND ua.is_correct = 0
-      GROUP BY q.id, ua.selected_answer
+      GROUP BY q.id, ua.selected_answer, q.topic, q.specialty, q.source, q.year, ua.answered_at
       ORDER BY ua.answered_at DESC
       LIMIT 100`,
       [usuarioId]
