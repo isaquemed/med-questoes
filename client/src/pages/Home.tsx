@@ -96,6 +96,8 @@ export default function Home() {
         } else {
           const span = document.createElement('span');
           span.className = 'highlighted';
+          span.style.backgroundColor = '#fef08a'; // Amarelo suave para o grifo
+          span.style.color = 'inherit';
           try {
             range.surroundContents(span);
           } catch(e) {
@@ -105,6 +107,7 @@ export default function Home() {
           }
         }
         
+        // Capturar o HTML grifado
         const currentHighlights = questionTextContainer.innerHTML;
         setQuestionStatuses(prev => {
           const newStatuses = [...prev];
@@ -469,21 +472,30 @@ export default function Home() {
                   </div>
                 </div>
 
-                <div className="flex flex-col items-center pt-4">
+                <div className="flex flex-col items-center pt-8">
                   <Button 
-                    size="lg" 
-                    className="h-16 px-16 bg-[#002b5c] hover:bg-[#001a3a] text-white font-black text-lg rounded-2xl shadow-xl shadow-blue-900/20 transition-all hover:scale-[1.02] active:scale-[0.98] group"
-                    onClick={handleStartQuiz}
-                    disabled={loading}
+                    onClick={handleStartQuiz} 
+                    disabled={loading || totalQuestionsCount === 0}
+                    className="w-full md:w-auto min-w-[320px] h-20 bg-gradient-to-r from-[#002b5c] to-[#004a99] dark:from-blue-600 dark:to-blue-700 hover:from-[#001a3a] hover:to-[#002b5c] text-white font-black text-xl rounded-[1.5rem] shadow-2xl shadow-blue-900/30 transition-all hover:scale-[1.03] active:scale-[0.97] flex items-center justify-center gap-4 group"
                   >
-                    {loading ? "Preparando Questões..." : "Começar Agora"}
-                    <ChevronRight className="ml-2 w-6 h-6 group-hover:translate-x-1 transition-transform" />
+                    {loading ? (
+                      <div className="flex items-center gap-3">
+                        <div className="w-7 h-7 border-4 border-white/30 border-t-white rounded-full animate-spin"></div>
+                        <span>Preparando...</span>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center group-hover:rotate-12 transition-transform">
+                          <Zap size={24} className="text-[#c5a059]" />
+                        </div>
+                        Iniciar Simulado
+                        <ChevronRight className="ml-2 w-6 h-6 group-hover:translate-x-2 transition-transform" />
+                      </>
+                    )}
                   </Button>
-                  <div className="mt-6 flex items-center gap-2">
-                    <div className="flex -space-x-2">
-                      {[1,2,3].map(i => <div key={i} className="w-6 h-6 rounded-full border-2 border-white bg-gray-200"></div>)}
-                    </div>
-                    <p className="text-xs text-gray-400 font-bold">
+                  <div className="mt-6 flex items-center gap-2 px-4 py-2 bg-gray-50 dark:bg-slate-800 rounded-full border border-gray-100 dark:border-slate-700">
+                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                    <p className="text-[10px] font-black text-gray-500 dark:text-slate-400 uppercase tracking-widest">
                       {countLoading ? "Sincronizando banco..." : `${totalQuestionsCount.toLocaleString()} questões prontas para você`}
                     </p>
                   </div>
@@ -559,13 +571,28 @@ export default function Home() {
                   initialAnswer={currentStatus?.selectedAnswer}
                 />
               )}
-              <div className="flex gap-4 justify-between items-center pt-4">
-                <Button variant="ghost" onClick={() => setPageState("home")} className="text-gray-400 font-bold">Sair do Simulado</Button>
-                <div className="flex gap-3">
-                  <Button variant="outline" onClick={clearHighlights} className="rounded-xl border-gray-200 text-gray-500 flex items-center gap-2">
+              <div className="flex flex-col sm:flex-row gap-4 justify-between items-center pt-8 border-t border-gray-100 dark:border-slate-800">
+                <Button 
+                  variant="ghost" 
+                  onClick={() => setPageState("home")} 
+                  className="text-gray-400 dark:text-slate-500 font-black uppercase text-[10px] tracking-widest hover:text-red-500 transition-colors"
+                >
+                  Sair do Simulado
+                </Button>
+                <div className="flex flex-wrap justify-center gap-4">
+                  <Button 
+                    variant="outline" 
+                    onClick={clearHighlights} 
+                    className="rounded-2xl border-gray-200 dark:border-slate-700 text-gray-500 dark:text-slate-400 font-black text-xs px-6 h-12 flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-slate-800 transition-all"
+                  >
                     <Highlighter size={16} /> Limpar Grifos
                   </Button>
-                  <Button onClick={handleFinishQuiz} className="bg-[#c5a059] hover:bg-[#b08e4d] text-white font-bold rounded-xl px-8">Finalizar</Button>
+                  <Button 
+                    onClick={handleFinishQuiz} 
+                    className="bg-gradient-to-r from-[#c5a059] to-[#b08e4d] hover:from-[#b08e4d] hover:to-[#c5a059] text-white font-black rounded-2xl px-10 h-12 shadow-lg shadow-amber-900/20 transition-all hover:scale-105 active:scale-95"
+                  >
+                    Finalizar Simulado
+                  </Button>
                 </div>
               </div>
             </div>
@@ -613,9 +640,20 @@ export default function Home() {
             <div><p className="text-[10px] font-black text-gray-400 uppercase mb-1">Taxa</p><p className="text-3xl font-black text-[#002b5c]">{percentage.toFixed(0)}%</p></div>
           </div>
 
-          <div className="flex flex-col gap-3">
-            <Button onClick={handleRestart} className="h-16 bg-[#002b5c] hover:bg-[#001a3a] text-white font-black rounded-2xl shadow-lg shadow-blue-900/10">Novo Simulado</Button>
-            <Button variant="ghost" onClick={() => { setPageState("quiz"); setCurrentIndex(0); }} className="text-gray-400 font-bold">Revisar Questões</Button>
+          <div className="flex flex-col gap-4">
+            <Button 
+              onClick={handleRestart} 
+              className="h-16 bg-gradient-to-r from-[#002b5c] to-[#004a99] hover:from-[#001a3a] hover:to-[#002b5c] text-white font-black rounded-2xl shadow-xl shadow-blue-900/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+            >
+              Novo Simulado
+            </Button>
+            <Button 
+              variant="ghost" 
+              onClick={() => { setPageState("quiz"); setCurrentIndex(0); }} 
+              className="h-14 text-gray-400 dark:text-slate-500 font-black uppercase text-xs tracking-widest hover:text-[#002b5c] dark:hover:text-blue-400 transition-colors"
+            >
+              Revisar Questões
+            </Button>
           </div>
         </Card>
       </div>
