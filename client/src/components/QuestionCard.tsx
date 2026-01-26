@@ -18,7 +18,7 @@ interface Question {
   year?: number;
   specialty?: string;
   resolution?: string;
-  highlights?: string; // Adicionado suporte a grifos salvos
+  highlights?: string;
 }
 
 interface QuestionCardProps {
@@ -99,7 +99,7 @@ export function QuestionCard({
 
       {/* Question Text */}
       <div className="space-y-4">
-        <div className="prose prose-blue max-w-none">
+        <div className="prose prose-blue max-w-none question-text-body">
           {question.highlights ? (
             <div 
               className="text-lg leading-relaxed text-foreground mb-4"
@@ -211,7 +211,6 @@ export function QuestionCard({
             )}
           </div>
 
-          {/* Bloco da Resolução Comentada */}
           {localResolution ? (
             <div className="p-8 bg-[#002b5c]/5 border-l-4 border-[#d4af37] rounded-r-xl">
               <h3 className="font-bold text-[#002b5c] mb-4 flex items-center gap-2 text-xl">
@@ -260,7 +259,6 @@ export function QuestionCard({
         </div>
       )}
 
-      {/* Submit Button */}
       {!showResult && (
         <Button
           onClick={handleSubmit}

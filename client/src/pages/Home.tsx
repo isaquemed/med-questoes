@@ -76,9 +76,9 @@ export default function Home() {
         const range = selection?.getRangeAt(0);
         if (!range) return;
         
-        // Verificar se a seleção está dentro do container da questão
-        const questionContainer = document.querySelector('.question-content-container');
-        if (!questionContainer || !questionContainer.contains(range.commonAncestorContainer)) {
+        // Alvo específico: o container do texto da questão
+        const questionTextContainer = document.querySelector('.question-text-body');
+        if (!questionTextContainer || !questionTextContainer.contains(range.commonAncestorContainer)) {
           return;
         }
         
@@ -108,8 +108,8 @@ export default function Home() {
           }
         }
         
-        // Salvar o estado atual do HTML da questão como grifos
-        const currentHighlights = questionContainer.innerHTML;
+        // Salvar APENAS o conteúdo interno do texto da questão
+        const currentHighlights = questionTextContainer.innerHTML;
         setQuestionStatuses(prev => {
           const newStatuses = [...prev];
           newStatuses[currentIndex] = {
@@ -151,7 +151,7 @@ export default function Home() {
       if (currentFilters.year !== "all") params.year = currentFilters.year;
       if (currentFilters.specialty !== "all") params.specialty = currentFilters.specialty;
       if (currentFilters.topic !== "all") params.topic = currentFilters.topic;
-      params.limit = 1; // Só queremos o total
+      params.limit = 1;
       params.offset = 0;
 
       const response = await questionsApi.getQuestions(params);
@@ -320,10 +320,9 @@ export default function Home() {
   };
 
   const clearHighlights = () => {
-    const questionContainer = document.querySelector('.question-content-container');
-    if (questionContainer) {
-      // Remove all spans with class 'highlighted' but keep their text
-      const highlights = questionContainer.querySelectorAll('.highlighted');
+    const questionTextContainer = document.querySelector('.question-text-body');
+    if (questionTextContainer) {
+      const highlights = questionTextContainer.querySelectorAll('.highlighted');
       highlights.forEach(h => {
         const parent = h.parentNode;
         if (parent) {
@@ -557,17 +556,15 @@ export default function Home() {
               </div>
 
               {currentQuestion && (
-                <div className="question-content-container">
-                  <QuestionCard
-                    key={currentQuestion.id}
-                    question={{
-                      ...currentQuestion,
-                      highlights: currentStatus?.highlights
-                    }}
-                    onAnswer={handleAnswer}
-                    initialAnswer={currentStatus?.selectedAnswer}
-                  />
-                </div>
+                <QuestionCard
+                  key={currentQuestion.id}
+                  question={{
+                    ...currentQuestion,
+                    highlights: currentStatus?.highlights
+                  }}
+                  onAnswer={handleAnswer}
+                  initialAnswer={currentStatus?.selectedAnswer}
+                />
               )}
             </div>
 
