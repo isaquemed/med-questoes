@@ -77,7 +77,8 @@ export default function Home() {
       if (!selectedText) return;
 
       const range = selection.getRangeAt(0);
-      const container = document.querySelector(`[id^="question-content-"]`);
+      // Usar a classe estável em vez do ID dinâmico para evitar problemas de timing do React
+      const container = document.querySelector('.question-text-body > div');
       
       if (!container || !container.contains(range.commonAncestorContainer)) return;
 
@@ -87,7 +88,6 @@ export default function Home() {
       const existingHighlight = (node as HTMLElement)?.closest('.highlighted');
 
       if (existingHighlight) {
-        // Remover grifo existente
         const parent = existingHighlight.parentNode;
         if (parent) {
           while (existingHighlight.firstChild) {
@@ -97,10 +97,8 @@ export default function Home() {
           parent.normalize();
         }
       } else {
-        // Criar novo grifo
         const span = document.createElement('span');
         span.className = 'highlighted';
-        // Aplicar estilos inline agressivos para garantir visibilidade imediata
         span.setAttribute('style', 'background-color: #ffff00 !important; color: #000000 !important; display: inline !important; border-radius: 2px !important; padding: 2px 0 !important;');
 
         try {
@@ -112,7 +110,6 @@ export default function Home() {
         }
       }
 
-      // Sincronizar com o estado do React
       const updatedHtml = container.innerHTML;
       setQuestionStatuses(prev => {
         const newStatuses = [...prev];

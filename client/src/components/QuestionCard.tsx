@@ -127,7 +127,7 @@ export function QuestionCard({
           className="text-gray-800 dark:text-slate-200 leading-relaxed text-xl font-medium select-text pointer-events-auto"
           style={{ userSelect: 'text', WebkitUserSelect: 'text' }}
           dangerouslySetInnerHTML={{ 
-            __html: question.highlights || processText(question.question).replace(/\n/g, '<br/>') 
+            __html: question.highlights || question.question.replace(/\n/g, '<br/>') 
           }}
         />
       </div>

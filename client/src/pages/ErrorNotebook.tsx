@@ -71,14 +71,15 @@ export default function ErrorNotebook() {
       const data = await response.json();
       setErrors(data || []);
 
-      const uniqueSpecialties = Array.from(new Set(data?.map((e: ErrorQuestion) => e.specialty) || [])) as string[];
-      setSpecialties(uniqueSpecialties.filter(Boolean));
+      const rawData = data || [];
+      const uniqueSpecialties = Array.from(new Set(rawData.map((e: any) => e.specialty).filter(Boolean))) as string[];
+      setSpecialties(uniqueSpecialties.sort());
       
-      // Inicializar tópicos se houver especialidade selecionada
+      // Atualizar tópicos disponíveis com base na especialidade selecionada
       if (selectedSpecialty !== 'all') {
-        const filteredBySpec = data?.filter((e: ErrorQuestion) => e.specialty === selectedSpecialty) || [];
-        const uniqueTopics = Array.from(new Set(filteredBySpec.map((e: ErrorQuestion) => e.topic).filter(Boolean))) as string[];
-        setTopics(uniqueTopics);
+        const filteredBySpec = rawData.filter((e: any) => e.specialty === selectedSpecialty);
+        const uniqueTopics = Array.from(new Set(filteredBySpec.map((e: any) => e.topic).filter(Boolean))) as string[];
+        setTopics(uniqueTopics.sort());
       } else {
         setTopics([]);
       }
