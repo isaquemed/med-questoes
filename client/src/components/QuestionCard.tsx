@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { CheckCircle2, XCircle, Lightbulb, Sparkles } from "lucide-react";
+import { CheckCircle2, XCircle, Lightbulb, Sparkles, Highlighter } from "lucide-react";
 import { useState, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -27,6 +27,7 @@ interface QuestionCardProps {
   onAnswer: (selectedAnswer: string, isCorrect: boolean) => void;
   disabled?: boolean;
   initialAnswer?: string | null;
+  onClearHighlights?: () => void;
 }
 
 export function QuestionCard({
@@ -34,6 +35,7 @@ export function QuestionCard({
   onAnswer,
   disabled = false,
   initialAnswer = null,
+  onClearHighlights,
 }: QuestionCardProps) {
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(initialAnswer);
   const [showResult, setShowResult] = useState(!!initialAnswer);
@@ -98,12 +100,24 @@ export function QuestionCard({
             )}
           </div>
         </div>
-        {question.specialty && (
-          <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 dark:bg-blue-900/20 text-[#002b5c] dark:text-blue-300 rounded-xl text-xs font-bold border border-blue-100/50 dark:border-blue-800/50">
-            <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-            {question.specialty}
-          </div>
-        )}
+        <div className="flex items-center gap-3">
+          {onClearHighlights && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={onClearHighlights}
+              className="rounded-xl border-amber-100 dark:border-amber-900/30 text-amber-600 dark:text-amber-500 font-black text-[10px] uppercase tracking-widest h-9 px-4 flex items-center gap-2 hover:bg-amber-50 dark:hover:bg-amber-900/10 transition-all"
+            >
+              <Highlighter size={14} /> Limpar Grifos
+            </Button>
+          )}
+          {question.specialty && (
+            <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 dark:bg-blue-900/20 text-[#002b5c] dark:text-blue-300 rounded-xl text-xs font-bold border border-blue-100/50 dark:border-blue-800/50">
+              <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+              {question.specialty}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Question Text com Estilo Acadêmico */}

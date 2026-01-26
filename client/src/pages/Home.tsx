@@ -84,23 +84,33 @@ export default function Home() {
         
         const selectedNode = range.startContainer.parentNode;
         
-        if (selectedNode instanceof HTMLElement && selectedNode.classList.contains('highlighted')) {
-          const parent = selectedNode.parentNode;
+        // Verificar se já está grifado para remover
+        let node: Node | null = range.commonAncestorContainer;
+        if (node.nodeType === 3) node = node.parentNode;
+        
+        const existingHighlight = (node as HTMLElement)?.closest('.highlighted');
+        
+        if (existingHighlight) {
+          const parent = existingHighlight.parentNode;
           if (parent) {
-            while (selectedNode.firstChild) {
-              parent.insertBefore(selectedNode.firstChild, selectedNode);
+            while (existingHighlight.firstChild) {
+              parent.insertBefore(existingHighlight.firstChild, existingHighlight);
             }
-            parent.removeChild(selectedNode);
+            parent.removeChild(existingHighlight);
             parent.normalize();
           }
         } else {
           const span = document.createElement('span');
           span.className = 'highlighted';
-          span.style.backgroundColor = '#fef08a'; // Amarelo suave para o grifo
-          span.style.color = 'inherit';
+          span.style.backgroundColor = '#fef08a';
+          span.style.color = '#000000';
+          span.style.padding = '2px 0';
+          span.style.borderRadius = '2px';
+          
           try {
             range.surroundContents(span);
           } catch(e) {
+            // Fallback para seleções que cruzam múltiplos nós
             const contents = range.extractContents();
             span.appendChild(contents);
             range.insertNode(span);
@@ -569,6 +579,7 @@ export default function Home() {
                   question={currentQuestion}
                   onAnswer={handleAnswer}
                   initialAnswer={currentStatus?.selectedAnswer}
+                  onClearHighlights={clearHighlights}
                 />
               )}
               <div className="flex flex-col sm:flex-row gap-4 justify-between items-center pt-8 border-t border-gray-100 dark:border-slate-800">
@@ -580,13 +591,6 @@ export default function Home() {
                   Sair do Simulado
                 </Button>
                 <div className="flex flex-wrap justify-center gap-4">
-                  <Button 
-                    variant="outline" 
-                    onClick={clearHighlights} 
-                    className="rounded-2xl border-gray-200 dark:border-slate-700 text-gray-500 dark:text-slate-400 font-black text-xs px-6 h-12 flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-slate-800 transition-all"
-                  >
-                    <Highlighter size={16} /> Limpar Grifos
-                  </Button>
                   <Button 
                     onClick={handleFinishQuiz} 
                     className="bg-gradient-to-r from-[#c5a059] to-[#b08e4d] hover:from-[#b08e4d] hover:to-[#c5a059] text-white font-black rounded-2xl px-10 h-12 shadow-lg shadow-amber-900/20 transition-all hover:scale-105 active:scale-95"
