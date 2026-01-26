@@ -2,6 +2,7 @@ import { Router } from "express";
 import { pool } from "../db/index.js";
 import { authenticateToken } from "../middleware/auth.js";
 const router = Router();
+const dbPool = pool;
 /**
  * POST /api/user-answers
  * Registra uma resposta do usuário (requer autenticação)
@@ -16,8 +17,8 @@ router.post("/", authenticateToken, async (req, res) => {
             });
         }
         const answeredAt = Math.floor(Date.now() / 1000);
-        // Usar raw query para inserir
-        await pool.query(`INSERT INTO user_answers (usuario_id, question_id, selected_answer, is_correct, answered_at, tempo_resposta, tema, highlights) 
+        // Usar a tabela 'user_answers'
+        await dbPool.query(`INSERT INTO user_answers (usuario_id, question_id, selected_answer, is_correct, answered_at, tempo_resposta, tema, highlights) 
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`, [usuarioId, questionId, selectedAnswer, isCorrect ? 1 : 0, answeredAt, tempoResposta || null, tema || null, highlights || null]);
         res.json({
             success: true,
@@ -36,20 +37,22 @@ router.post("/", authenticateToken, async (req, res) => {
 router.get("/errors", authenticateToken, async (req, res) => {
     try {
         const usuarioId = req.user?.id;
-        const [rows] = await pool.query(`SELECT 
+        const [rows] = await dbPool.query(`SELECT 
         q.id,
         q.question,
         q.correct_answer as correctAnswer,
         ua.selected_answer as selectedAnswer,
         q.specialty,
+        q.topic,
         q.source,
         q.year,
         ua.answered_at as answeredAt,
+        ua.highlights,
         COUNT(*) as attempts
       FROM user_answers ua
       JOIN questions q ON ua.question_id = q.id
       WHERE ua.usuario_id = ? AND ua.is_correct = 0
-      GROUP BY q.id, ua.selected_answer
+      GROUP BY q.id, ua.selected_answer, q.topic, q.specialty, q.source, q.year, ua.answered_at, ua.highlights
       ORDER BY ua.answered_at DESC
       LIMIT 100`, [usuarioId]);
         res.json(rows);
@@ -67,7 +70,7 @@ router.get("/performance", authenticateToken, async (req, res) => {
     try {
         const usuarioId = req.user?.id;
         // Total de questões e acertos
-        const [totalStats] = await pool.query(`SELECT 
+        const [totalStats] = await dbPool.query(`SELECT 
         COUNT(*) as totalQuestions,
         SUM(is_correct) as correctAnswers,
         SUM(CASE WHEN is_correct = 0 THEN 1 ELSE 0 END) as incorrectAnswers,
@@ -79,7 +82,7 @@ router.get("/performance", authenticateToken, async (req, res) => {
             return res.json(null);
         }
         // Desempenho por especialidade
-        const [bySpecialty] = await pool.query(`SELECT 
+        const [bySpecialty] = await dbPool.query(`SELECT 
         q.specialty,
         COUNT(*) as total,
         SUM(ua.is_correct) as correct,
@@ -90,7 +93,7 @@ router.get("/performance", authenticateToken, async (req, res) => {
       GROUP BY q.specialty
       ORDER BY accuracy DESC`, [usuarioId]);
         // Desempenho por banca
-        const [bySource] = await pool.query(`SELECT 
+        const [bySource] = await dbPool.query(`SELECT 
         q.source,
         COUNT(*) as total,
         SUM(ua.is_correct) as correct,
@@ -104,10 +107,10 @@ router.get("/performance", authenticateToken, async (req, res) => {
         const now = Math.floor(Date.now() / 1000);
         const sevenDaysAgo = now - (7 * 24 * 60 * 60);
         const thirtyDaysAgo = now - (30 * 24 * 60 * 60);
-        const [last7Days] = await pool.query(`SELECT (SUM(is_correct) * 100.0 / COUNT(*)) as accuracy
+        const [last7Days] = await dbPool.query(`SELECT (SUM(is_correct) * 100.0 / COUNT(*)) as accuracy
        FROM user_answers
        WHERE usuario_id = ? AND answered_at >= ?`, [usuarioId, sevenDaysAgo]);
-        const [last30Days] = await pool.query(`SELECT (SUM(is_correct) * 100.0 / COUNT(*)) as accuracy
+        const [last30Days] = await dbPool.query(`SELECT (SUM(is_correct) * 100.0 / COUNT(*)) as accuracy
        FROM user_answers
        WHERE usuario_id = ? AND answered_at >= ?`, [usuarioId, thirtyDaysAgo]);
         const last7Accuracy = last7Days[0]?.accuracy || 0;
@@ -149,7 +152,7 @@ router.get("/performance", authenticateToken, async (req, res) => {
 router.delete("/reset", authenticateToken, async (req, res) => {
     try {
         const usuarioId = req.user?.id;
-        await pool.query(`DELETE FROM user_answers WHERE usuario_id = ?`, [usuarioId]);
+        await dbPool.query(`DELETE FROM user_answers WHERE usuario_id = ?`, [usuarioId]);
         res.json({
             success: true,
             message: "Histórico de respostas limpo com sucesso"

@@ -23,7 +23,7 @@ router.post("/", authenticateToken, async (req: any, res: any) => {
 
     const answeredAt = Math.floor(Date.now() / 1000);
 
-    // Usar a tabela 'user_answers' que é a que o usuário confirmou existir
+    // Usar a tabela 'user_answers'
     await dbPool.query(
       `INSERT INTO user_answers (usuario_id, question_id, selected_answer, is_correct, answered_at, tempo_resposta, tema, highlights) 
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -59,11 +59,12 @@ router.get("/errors", authenticateToken, async (req: any, res: any) => {
         q.source,
         q.year,
         ua.answered_at as answeredAt,
+        ua.highlights,
         COUNT(*) as attempts
       FROM user_answers ua
       JOIN questions q ON ua.question_id = q.id
       WHERE ua.usuario_id = ? AND ua.is_correct = 0
-      GROUP BY q.id, ua.selected_answer, q.topic, q.specialty, q.source, q.year, ua.answered_at
+      GROUP BY q.id, ua.selected_answer, q.topic, q.specialty, q.source, q.year, ua.answered_at, ua.highlights
       ORDER BY ua.answered_at DESC
       LIMIT 100`,
       [usuarioId]

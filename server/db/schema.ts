@@ -10,8 +10,6 @@ export const questions = mysqlTable("questions", {
   specialty: varchar("specialty", { length: 255 }),
   topic: varchar("topic", { length: 255 }),
   area: varchar("area", { length: 255 }),
-  // A coluna 'resolution' será removida da tabela questions via SQL, 
-  // pois agora usamos a tabela 'resolutions' dedicada.
 });
 
 // Alternativas das questões

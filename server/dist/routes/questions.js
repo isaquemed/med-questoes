@@ -1,9 +1,18 @@
 import { Router } from "express";
 import { pool } from "../db/index.js";
+import { validateQuestionFilters } from "../validators/questionFilters.js";
 const router = Router();
 router.get('/', async (req, res) => {
     try {
-        const { source, year, specialty, topic, limit = 10, offset = 0 } = req.query;
+        // Validar query params
+        const validation = validateQuestionFilters(req.query);
+        if (!validation.success) {
+            return res.status(400).json({
+                error: 'Parâmetros inválidos',
+                details: validation.error.issues
+            });
+        }
+        const { source, year, specialty, topic, limit = 10, offset = 0 } = validation.data;
         console.log("Buscando questões com filtros:", { source, year, specialty, topic, limit, offset });
         // 1. Construir a query base para as questões
         let whereClause = "WHERE 1=1";

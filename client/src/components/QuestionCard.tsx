@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { CheckCircle2, XCircle, Lightbulb, Sparkles, Highlighter } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import axios from 'axios';
@@ -24,7 +24,7 @@ interface Question {
 
 interface QuestionCardProps {
   question: Question;
-  onAnswer: (selectedAnswer: string, isCorrect: boolean) => void;
+  onAnswer: (selectedAnswer: string, isCorrect: boolean, highlights?: string) => void;
   disabled?: boolean;
   initialAnswer?: string | null;
   onClearHighlights?: () => void;
@@ -41,12 +41,93 @@ export function QuestionCard({
   const [showResult, setShowResult] = useState(!!initialAnswer);
   const [isGenerating, setIsGenerating] = useState(false);
   const [localResolution, setLocalResolution] = useState<string | undefined>(question.resolution);
+  const [currentHighlights, setCurrentHighlights] = useState<string>(question.highlights || "");
+  const questionRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setSelectedAnswer(initialAnswer);
     setShowResult(!!initialAnswer);
     setLocalResolution(question.resolution);
-  }, [question.id, initialAnswer, question.resolution]);
+    setCurrentHighlights(question.highlights || "");
+  }, [question.id, initialAnswer, question.resolution, question.highlights]);
+
+  // Lógica de grifar texto
+  useEffect(() => {
+    if (disabled || showResult) return;
+
+    const handleMouseUp = () => {
+      const selection = window.getSelection();
+      if (!selection || selection.rangeCount === 0) return;
+
+      const selectedText = selection.toString().trim();
+      if (!selectedText) return;
+
+      const range = selection.getRangeAt(0);
+      const container = questionRef.current;
+      
+      if (!container || !container.contains(range.commonAncestorContainer)) return;
+
+      // Verificar se a seleção já contém ou está dentro de um grifo
+      let node: Node | null = range.commonAncestorContainer;
+      if (node.nodeType === 3) node = node.parentNode;
+      const existingHighlight = (node as HTMLElement)?.closest('.highlighted');
+
+      if (existingHighlight) {
+        const parent = existingHighlight.parentNode;
+        if (parent) {
+          while (existingHighlight.firstChild) {
+            parent.insertBefore(existingHighlight.firstChild, existingHighlight);
+          }
+          parent.removeChild(existingHighlight);
+          parent.normalize();
+        }
+      } else {
+        const span = document.createElement('span');
+        span.className = 'highlighted';
+        // Estilos inline para garantir visibilidade imediata
+        span.style.backgroundColor = '#ffff00';
+        span.style.color = '#000000';
+        span.style.borderRadius = '2px';
+        span.style.padding = '2px 0';
+        span.style.display = 'inline';
+
+        try {
+          range.surroundContents(span);
+        } catch (e) {
+          // Fallback para seleções complexas que cruzam múltiplos nós
+          const contents = range.extractContents();
+          span.appendChild(contents);
+          range.insertNode(span);
+        }
+      }
+
+      const updatedHtml = container.innerHTML;
+      setCurrentHighlights(updatedHtml);
+      selection.removeAllRanges();
+    };
+
+    document.addEventListener('mouseup', handleMouseUp);
+    return () => document.removeEventListener('mouseup', handleMouseUp);
+  }, [disabled, showResult, question.id]);
+
+  const handleClearLocalHighlights = () => {
+    if (questionRef.current) {
+      // Remove todas as tags span.highlighted mantendo o texto
+      const highlights = questionRef.current.querySelectorAll('.highlighted');
+      highlights.forEach(h => {
+        const parent = h.parentNode;
+        if (parent) {
+          while (h.firstChild) {
+            parent.insertBefore(h.firstChild, h);
+          }
+          parent.removeChild(h);
+          parent.normalize();
+        }
+      });
+      setCurrentHighlights(questionRef.current.innerHTML);
+    }
+    if (onClearHighlights) onClearHighlights();
+  };
 
   const handleGenerateAI = async () => {
     setIsGenerating(true);
@@ -74,7 +155,8 @@ export function QuestionCard({
     if (selectedAnswer && !showResult) {
       const isCorrect = selectedAnswer === question.correctAnswer;
       setShowResult(true);
-      onAnswer(selectedAnswer, isCorrect);
+      // Passar os highlights atuais para a função onAnswer
+      onAnswer(selectedAnswer, isCorrect, currentHighlights);
     }
   };
 
@@ -101,16 +183,15 @@ export function QuestionCard({
           </div>
         </div>
         <div className="flex items-center gap-3">
-          {onClearHighlights && (
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={onClearHighlights}
-              className="rounded-xl border-amber-100 dark:border-amber-900/30 text-amber-600 dark:text-amber-500 font-black text-[10px] uppercase tracking-widest h-9 px-4 flex items-center gap-2 hover:bg-amber-50 dark:hover:bg-amber-900/10 transition-all"
-            >
-              <Highlighter size={14} /> Limpar Grifos
-            </Button>
-          )}
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleClearLocalHighlights}
+            disabled={disabled || showResult}
+            className="rounded-xl border-amber-100 dark:border-amber-900/30 text-amber-600 dark:text-amber-500 font-black text-[10px] uppercase tracking-widest h-9 px-4 flex items-center gap-2 hover:bg-amber-50 dark:hover:bg-amber-900/10 transition-all"
+          >
+            <Highlighter size={14} /> Limpar Grifos
+          </Button>
           {question.specialty && (
             <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 dark:bg-blue-900/20 text-[#002b5c] dark:text-blue-300 rounded-xl text-xs font-bold border border-blue-100/50 dark:border-blue-800/50">
               <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
@@ -123,11 +204,12 @@ export function QuestionCard({
       {/* Question Text com Estilo Acadêmico */}
       <div className="question-text-body prose prose-blue dark:prose-invert max-w-none select-text">
         <div 
+          ref={questionRef}
           id={`question-content-${question.id}`}
           className="text-gray-800 dark:text-slate-200 leading-relaxed text-xl font-medium select-text pointer-events-auto"
           style={{ userSelect: 'text', WebkitUserSelect: 'text' }}
           dangerouslySetInnerHTML={{ 
-            __html: question.highlights || question.question.replace(/\n/g, '<br/>') 
+            __html: currentHighlights || question.question.replace(/\n/g, '<br/>') 
           }}
         />
       </div>

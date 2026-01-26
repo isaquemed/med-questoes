@@ -16,6 +16,7 @@ interface ErrorQuestion {
   year: number;
   answeredAt: number;
   attempts: number;
+  highlights?: string;
 }
 
 export default function ErrorNotebook() {
@@ -257,7 +258,10 @@ export default function ErrorNotebook() {
                 </div>
 
                 <div className="mb-8 p-6 bg-gray-50 rounded-xl border border-gray-100">
-                  <p className="text-lg text-gray-800 leading-relaxed font-medium">{err.question}</p>
+                  <div 
+                    className="text-lg text-gray-800 leading-relaxed font-medium"
+                    dangerouslySetInnerHTML={{ __html: err.highlights || err.question.replace(/\n/g, '<br/>') }}
+                  />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

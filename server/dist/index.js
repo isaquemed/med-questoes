@@ -9,6 +9,9 @@ import questionsRoutes from "./routes/questions.js";
 import resolutionsRoutes from "./routes/resolutions.js";
 import userAnswersRoutes from "./routes/userAnswers.js";
 import authRoutes from "./routes/auth.js";
+import { authLimiter, apiLimiter } from "./middleware/rateLimiter.js";
+import { requestLogger } from "./middleware/logger.js";
+import logger from "./middleware/logger.js";
 const app = express();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -34,11 +37,10 @@ app.use(helmet({
 }));
 app.use(cors());
 app.use(express.json());
-// Middleware de Log de Requisições
-app.use((req, res, next) => {
-    console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
-    next();
-});
+// Aplicar logging e rate limiting
+app.use(requestLogger);
+app.use("/api/auth", authLimiter);
+app.use("/api", apiLimiter);
 // Rotas da API
 app.use("/api/filters", filtersRoutes);
 app.use("/api/questions", questionsRoutes);
@@ -64,6 +66,6 @@ app.use((err, req, res, next) => {
 });
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
-    console.log(`Backend rodando na porta ${PORT}`);
-    console.log(`Ambiente: ${process.env.NODE_ENV || 'development'}`);
+    logger.info(`Backend rodando na porta ${PORT}`);
+    logger.info(`Ambiente: ${process.env.NODE_ENV || 'development'}`);
 });
