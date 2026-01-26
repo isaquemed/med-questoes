@@ -24,13 +24,11 @@ async function main() {
 
   for (const q of allQuestions) {
     const cleanedQuestion = await cleanText(q.question);
-    const cleanedResolution = q.resolution ? await cleanText(q.resolution) : null;
-
-    if (cleanedQuestion !== q.question || cleanedResolution !== q.resolution) {
+    
+    if (cleanedQuestion !== q.question) {
       await db.update(questions)
         .set({ 
-          question: cleanedQuestion, 
-          resolution: cleanedResolution 
+          question: cleanedQuestion
         })
         .where(eq(questions.id, q.id));
       console.log(`Questão ID ${q.id} limpa.`);
