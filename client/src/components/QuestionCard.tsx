@@ -122,13 +122,9 @@ export function QuestionCard({
 
       {/* Question Text com Estilo Acadêmico */}
       <div className="question-text-body prose prose-blue dark:prose-invert max-w-none">
-        {/* 
-          Priorizamos o conteúdo de highlights se ele existir. 
-          O segredo aqui é garantir que a classe 'question-text-body' 
-          seja o container direto para a lógica de seleção no Home.tsx
-        */}
         <div 
-          className="text-gray-800 dark:text-slate-200 leading-relaxed text-xl font-medium"
+          id={`question-content-${question.id}`}
+          className="text-gray-800 dark:text-slate-200 leading-relaxed text-xl font-medium select-text"
           dangerouslySetInnerHTML={{ 
             __html: question.highlights || processText(question.question).replace(/\n/g, '<br/>') 
           }}

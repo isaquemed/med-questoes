@@ -71,64 +71,65 @@ export default function Home() {
 
     const handleMouseUp = () => {
       const selection = window.getSelection();
-      const selectedText = selection?.toString().trim();
+      if (!selection || selection.rangeCount === 0) return;
+
+      const selectedText = selection.toString().trim();
+      if (!selectedText) return;
+
+      const range = selection.getRangeAt(0);
+      const container = document.querySelector(`[id^="question-content-"]`);
       
-      if (selectedText && selectedText.length > 0) {
-        const range = selection?.getRangeAt(0);
-        if (!range) return;
-        
-        // Buscar o container interno que realmente contém o texto
-        const questionTextContainer = document.querySelector('.question-text-body > div');
-        if (!questionTextContainer || !questionTextContainer.contains(range.commonAncestorContainer)) {
-          return;
-        }
-        
-        // Verificar se já está grifado para remover
-        let node: Node | null = range.commonAncestorContainer;
-        if (node.nodeType === 3) node = node.parentNode;
-        
-        const existingHighlight = (node as HTMLElement)?.closest('.highlighted');
-        
-        if (existingHighlight) {
-          const parent = existingHighlight.parentNode;
-          if (parent) {
-            while (existingHighlight.firstChild) {
-              parent.insertBefore(existingHighlight.firstChild, existingHighlight);
-            }
-            parent.removeChild(existingHighlight);
-            parent.normalize();
+      if (!container || !container.contains(range.commonAncestorContainer)) return;
+
+      // Verificar se a seleção já contém ou está dentro de um grifo
+      let node: Node | null = range.commonAncestorContainer;
+      if (node.nodeType === 3) node = node.parentNode;
+      const existingHighlight = (node as HTMLElement)?.closest('.highlighted');
+
+      if (existingHighlight) {
+        // Remover grifo existente
+        const parent = existingHighlight.parentNode;
+        if (parent) {
+          while (existingHighlight.firstChild) {
+            parent.insertBefore(existingHighlight.firstChild, existingHighlight);
           }
-        } else {
-          const span = document.createElement('span');
-          span.className = 'highlighted';
-          span.style.backgroundColor = '#ffff00'; // Amarelo vibrante
-          span.style.color = '#000000';
-          span.style.padding = '2px 0';
-          span.style.borderRadius = '2px';
-          span.style.display = 'inline';
-          
-          try {
-            range.surroundContents(span);
-          } catch(e) {
-            const contents = range.extractContents();
-            span.appendChild(contents);
-            range.insertNode(span);
-          }
+          parent.removeChild(existingHighlight);
+          parent.normalize();
         }
-        
-        // Capturar o HTML grifado do container interno
-        const currentHighlights = questionTextContainer.innerHTML;
-        setQuestionStatuses(prev => {
-          const newStatuses = [...prev];
+      } else {
+        // Criar novo grifo
+        const span = document.createElement('span');
+        span.className = 'highlighted';
+        span.style.backgroundColor = '#ffff00';
+        span.style.color = '#000000';
+        span.style.padding = '2px 0';
+        span.style.borderRadius = '2px';
+        span.style.display = 'inline';
+
+        try {
+          range.surroundContents(span);
+        } catch (e) {
+          // Fallback para seleções complexas
+          const contents = range.extractContents();
+          span.appendChild(contents);
+          range.insertNode(span);
+        }
+      }
+
+      // Sincronizar com o estado do React
+      const updatedHtml = container.innerHTML;
+      setQuestionStatuses(prev => {
+        const newStatuses = [...prev];
+        if (newStatuses[currentIndex]) {
           newStatuses[currentIndex] = {
             ...newStatuses[currentIndex],
-            highlights: currentHighlights
+            highlights: updatedHtml
           };
-          return newStatuses;
-        });
-        
-        selection?.removeAllRanges();
-      }
+        }
+        return newStatuses;
+      });
+
+      selection.removeAllRanges();
     };
 
     document.addEventListener('mouseup', handleMouseUp);
@@ -311,16 +312,15 @@ export default function Home() {
   };
 
   const clearHighlights = () => {
-    const highlights = document.querySelectorAll('.highlighted');
-    highlights.forEach(span => {
-      const parent = span.parentNode;
-      if (parent) {
-        while (span.firstChild) {
-          parent.insertBefore(span.firstChild, span);
-        }
-        parent.removeChild(span);
-        parent.normalize();
+    setQuestionStatuses(prev => {
+      const newStatuses = [...prev];
+      if (newStatuses[currentIndex]) {
+        newStatuses[currentIndex] = {
+          ...newStatuses[currentIndex],
+          highlights: undefined
+        };
       }
+      return newStatuses;
     });
   };
 
