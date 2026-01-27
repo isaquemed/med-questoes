@@ -27,7 +27,7 @@ export const questionsApi = {
     try {
       // Se há uma especialidade específica, usa o endpoint filtrado
       if (params?.specialty && params.specialty !== 'all') {
-        const response = await api.get(`/filtered-topics?specialty=${params.specialty}`);
+        const response = await api.get(`filters/filtered-topics?specialty=${params.specialty}`);
         // Retorna no mesmo formato esperado pelo frontend
         return { data: { topics: response.data.topics || [] } };
       }
