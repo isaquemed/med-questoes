@@ -108,10 +108,9 @@ export default function Home() {
     if (key === "specialty") {
       newFilters.topic = "all";
       try {
-        const response = await fetch(`/api/filters/filtered-topics?specialty=${encodeURIComponent(value)}`);
-        if (response.ok) {
-          const result = await response.json();
-          setAvailableFilters(prev => ({ ...prev, topics: result.topics || [] }));
+        const response = await questionsApi.getFilters({ specialty: value });
+        if (response.data) {
+          setAvailableFilters(prev => ({ ...prev, topics: response.data.topics || [] }));
         }
       } catch (err) {
         setAvailableFilters(prev => ({ ...prev, topics: [] }));
@@ -163,11 +162,11 @@ export default function Home() {
       const token = localStorage.getItem("medquestoes_token");
       if (!token) return;
       const tempoResposta = Math.floor((Date.now() - questionStartTime) / 1000);
-      await axios.post("/api/user-answers", {
-        questionId, selectedAnswer, isCorrect, tempoResposta, tema, highlights
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+await axios.post("/api/user-answers", {
+	        questionId: parseInt(questionId), selectedAnswer, isCorrect, tempoResposta, tema, highlights
+	      }, {
+	        headers: { Authorization: `Bearer ${token}` }
+	      });
     } catch (error) {
       console.error("Erro ao salvar resposta:", error);
     }
@@ -579,8 +578,8 @@ export default function Home() {
                     </div>
                   ) : (
                     <div className="flex items-center gap-3">
-                      <Zap size={20} className="fill-current" /> Iniciar Simulado
-                      <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform" />
+<Zap size={20} className="fill-current animate-pulse text-yellow-400" /> Iniciar Simulado
+	                      <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform" />
                     </div>
                   )}
                 </Button>
@@ -613,7 +612,7 @@ export default function Home() {
               </div>
             </Card>
 
-            <Card className="p-8 rounded-[3rem] border-none shadow-2xl bg-white dark:bg-slate-900 group cursor-pointer" onClick={() => setLocation("/errornotebook")}>
+            <Card className="p-8 rounded-[3rem] border-none shadow-2xl bg-white dark:bg-slate-900 group cursor-pointer" onClick={() => setLocation("/error-notebook")}>
               <div className="space-y-6">
                 <div className="w-14 h-14 bg-red-50 dark:bg-red-900/20 rounded-2xl flex items-center justify-center text-red-500">
                   <BookOpen size={28} />

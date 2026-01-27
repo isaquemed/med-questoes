@@ -132,10 +132,10 @@ export function QuestionCard({
   const handleGenerateAI = async () => {
     setIsGenerating(true);
     try {
-      const res = await axios.post("/api/resolutions/generate", {
-        questionId: question.id,
-        questionText: question.question
-      });
+const res = await axios.post("/api/resolutions/generate", {
+	        questionId: parseInt(question.id),
+	        questionText: question.question
+	      });
       setLocalResolution(res.data.resolution);
     } catch (err) {
       console.error("Erro ao chamar a IA:", err);
