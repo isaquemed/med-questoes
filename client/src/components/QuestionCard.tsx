@@ -206,7 +206,7 @@ const res = await axios.post("/api/resolutions/generate", {
         <div 
           ref={questionRef}
           id={`question-content-${question.id}`}
-          className="text-gray-800 dark:text-slate-50 leading-relaxed text-xl font-bold select-text pointer-events-auto"
+          className="text-gray-800 dark:text-blue-100 leading-relaxed text-xl font-bold select-text pointer-events-auto"
           style={{ userSelect: 'text', WebkitUserSelect: 'text' }}
           dangerouslySetInnerHTML={{ 
             __html: ((currentHighlights || (question?.question || "").replace(/\n/g, '<br/>')) || "").replace(/background-color: rgb\(255, 255, 0\)/g, 'background-color: rgba(255, 255, 0, 0.85); color: #000; border-radius: 4px;') 
@@ -244,9 +244,8 @@ const res = await axios.post("/api/resolutions/generate", {
             >
               <span className={`
                 font-black w-10 h-10 flex items-center justify-center rounded-xl flex-shrink-0 transition-all duration-300
-                ${isSelected 
-	                  ? "bg-[#002b5c] dark:bg-blue-500 text-white scale-110 shadow-lg shadow-blue-400/20" 
-	                  : "bg-gray-100 dark:bg-slate-700 text-gray-500 dark:text-slate-200 group-hover:bg-blue-100 dark:group-hover:bg-blue-500/30 group-hover:text-blue-600 dark:group-hover:text-white"            }
+                ${isSelected		                  ? "bg-[#002b5c] dark:bg-blue-600 text-white scale-110 shadow-lg shadow-blue-400/20" 
+		                  : "bg-gray-100 dark:bg-blue-900/30 text-gray-500 dark:text-blue-300 group-hover:bg-blue-100 dark:group-hover:bg-blue-500/40 group-hover:text-blue-600 dark:group-hover:text-blue-100"            }
               `}>
                 {alt.letter}
               </span>
@@ -255,7 +254,7 @@ const res = await axios.post("/api/resolutions/generate", {
                   remarkPlugins={[remarkGfm]}
                   components={{
                     p: ({ children }) => (
-	                      <span className={`text-base font-bold transition-colors duration-300 ${isSelected ? "text-[#002b5c] dark:text-blue-50" : "text-gray-600 dark:text-slate-100 group-hover:text-gray-900 dark:group-hover:text-white"}`}>
+	                      <span className={`text-base font-bold transition-colors duration-300 ${isSelected ? "text-[#002b5c] dark:text-blue-50" : "text-gray-600 dark:text-blue-200 group-hover:text-gray-900 dark:group-hover:text-blue-50"}`}>
                         {children}
                       </span>
                     ),
