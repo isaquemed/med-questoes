@@ -24,11 +24,10 @@ router.post("/", authenticateToken, async (req: any, res: any) => {
     const answeredAt = Math.floor(Date.now() / 1000);
 
     // Usar a tabela 'user_answers'
-    // Nota: Removido 'highlights' temporariamente para evitar erro de coluna inexistente
     await dbPool.query(
-      `INSERT INTO user_answers (usuario_id, question_id, selected_answer, is_correct, answered_at, tempo_resposta, tema) 
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [usuarioId, questionId, selectedAnswer, isCorrect ? 1 : 0, answeredAt, tempoResposta || null, tema || null]
+      `INSERT INTO user_answers (usuario_id, question_id, selected_answer, is_correct, answered_at, tempo_resposta, tema, highlights) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [usuarioId, questionId, selectedAnswer, isCorrect ? 1 : 0, answeredAt, tempoResposta || null, tema || null, highlights || null]
     );
 
     res.json({
@@ -60,6 +59,7 @@ router.get("/errors", authenticateToken, async (req: any, res: any) => {
         q.source,
         q.year,
         ua.answered_at as answeredAt,
+        ua.highlights,
         (SELECT COUNT(*) FROM user_answers ua2 WHERE ua2.usuario_id = ua.usuario_id AND ua2.question_id = ua.question_id) as attempts
       FROM user_answers ua
       JOIN questions q ON ua.question_id = q.id
