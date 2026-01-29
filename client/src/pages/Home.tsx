@@ -166,7 +166,8 @@ export default function Home() {
     try {
       const token = localStorage.getItem("medquestoes_token");
       if (!token) return;
-      const tempoResposta = Math.floor((Date.now() - questionStartTime) / 1000);
+      const tempoResposta = Math.max(1, Math.floor((Date.now() - questionStartTime) / 1000));
+      console.log("Salvando resposta:", { questionId, selectedAnswer, isCorrect, tempoResposta, tema });
 await axios.post("/api/user-answers", {
 	        questionId: parseInt(questionId), selectedAnswer, isCorrect, tempoResposta, tema, highlights
 	      }, {
@@ -179,8 +180,9 @@ await axios.post("/api/user-answers", {
 
   const handleAnswer = (selectedAnswer: string, isCorrect: boolean, highlights?: string) => {
     if (user) {
-      const tema = questions[currentIndex]?.specialty || "Geral";
-      saveAnswer(isCorrect, selectedAnswer, questions[currentIndex].id, tema, highlights);
+      const currentQuestion = questions[currentIndex];
+      const tema = currentQuestion?.specialty || currentQuestion?.topic || "Geral";
+      saveAnswer(isCorrect, selectedAnswer, currentQuestion.id.toString(), tema, highlights);
     }
     setStats((prev) => ({
       correct: prev.correct + (isCorrect ? 1 : 0),

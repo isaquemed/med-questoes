@@ -60,11 +60,10 @@ router.get("/errors", authenticateToken, async (req: any, res: any) => {
         q.year,
         ua.answered_at as answeredAt,
         ua.highlights,
-        COUNT(*) as attempts
+        (SELECT COUNT(*) FROM user_answers ua2 WHERE ua2.usuario_id = ua.usuario_id AND ua2.question_id = ua.question_id) as attempts
       FROM user_answers ua
       JOIN questions q ON ua.question_id = q.id
       WHERE ua.usuario_id = ? AND ua.is_correct = 0
-      GROUP BY q.id, ua.selected_answer, q.topic, q.specialty, q.source, q.year, ua.answered_at, ua.highlights
       ORDER BY ua.answered_at DESC
       LIMIT 100`,
       [usuarioId]
@@ -91,7 +90,7 @@ router.get("/performance", authenticateToken, async (req: any, res: any) => {
         COUNT(*) as totalQuestions,
         SUM(is_correct) as correctAnswers,
         SUM(CASE WHEN is_correct = 0 THEN 1 ELSE 0 END) as incorrectAnswers,
-        (SUM(is_correct) * 100.0 / COUNT(*)) as accuracy
+        COALESCE((SUM(is_correct) * 100.0 / COUNT(*)), 0) as accuracy
       FROM user_answers
       WHERE usuario_id = ?`,
       [usuarioId]
@@ -109,7 +108,7 @@ router.get("/performance", authenticateToken, async (req: any, res: any) => {
         q.specialty,
         COUNT(*) as total,
         SUM(ua.is_correct) as correct,
-        (SUM(ua.is_correct) * 100.0 / COUNT(*)) as accuracy
+        COALESCE((SUM(ua.is_correct) * 100.0 / COUNT(*)), 0) as accuracy
       FROM user_answers ua
       JOIN questions q ON ua.question_id = q.id
       WHERE ua.usuario_id = ? AND q.specialty IS NOT NULL
@@ -124,7 +123,7 @@ router.get("/performance", authenticateToken, async (req: any, res: any) => {
         q.source,
         COUNT(*) as total,
         SUM(ua.is_correct) as correct,
-        (SUM(ua.is_correct) * 100.0 / COUNT(*)) as accuracy
+        COALESCE((SUM(ua.is_correct) * 100.0 / COUNT(*)), 0) as accuracy
       FROM user_answers ua
       JOIN questions q ON ua.question_id = q.id
       WHERE ua.usuario_id = ? AND q.source IS NOT NULL
@@ -139,14 +138,14 @@ router.get("/performance", authenticateToken, async (req: any, res: any) => {
     const thirtyDaysAgo = now - (30 * 24 * 60 * 60);
 
     const [last7Days]: [any[], any] = await dbPool.query(
-      `SELECT (SUM(is_correct) * 100.0 / COUNT(*)) as accuracy
+      `SELECT COALESCE((SUM(is_correct) * 100.0 / COUNT(*)), 0) as accuracy
        FROM user_answers
        WHERE usuario_id = ? AND answered_at >= ?`,
       [usuarioId, sevenDaysAgo]
     );
 
     const [last30Days]: [any[], any] = await dbPool.query(
-      `SELECT (SUM(is_correct) * 100.0 / COUNT(*)) as accuracy
+      `SELECT COALESCE((SUM(is_correct) * 100.0 / COUNT(*)), 0) as accuracy
        FROM user_answers
        WHERE usuario_id = ? AND answered_at >= ?`,
       [usuarioId, thirtyDaysAgo]

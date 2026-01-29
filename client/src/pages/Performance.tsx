@@ -116,24 +116,24 @@ export default function Performance() {
   const COLORS = ['#002b5c', '#d4af37', '#1e40af', '#fbbf24'];
 
   return (
-    <div className="min-h-screen bg-[#f8fafc]">
+    <div className="min-h-screen bg-background text-foreground">
       {/* Header */}
-      <nav className="bg-white border-b border-gray-100 sticky top-0 z-50">
+      <nav className="bg-card border-b border-border sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 h-20 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Button variant="ghost" onClick={() => setLocation('/')} className="text-[#002b5c]">
               <ArrowLeft className="w-5 h-5 mr-2" /> Voltar
             </Button>
-            <div className="h-8 w-[1px] bg-gray-200 mx-2 hidden md:block"></div>
+            <div className="h-8 w-[1px] bg-border mx-2 hidden md:block"></div>
             <div>
-              <h1 className="text-xl font-bold text-[#002b5c]">Meu Desempenho</h1>
-              <p className="text-xs text-gray-500 hidden md:block">Análise detalhada de evolução</p>
+              <h1 className="text-xl font-bold text-primary">Meu Desempenho</h1>
+              <p className="text-xs text-muted-foreground hidden md:block">Análise detalhada de evolução</p>
             </div>
           </div>
           <div className="flex items-center gap-4">
             <div className="text-right hidden sm:block">
-              <p className="text-sm font-bold text-[#002b5c]">{user.nome}</p>
-              <p className="text-xs text-gray-500">{user.usuario}</p>
+              <p className="text-sm font-bold text-foreground">{user.nome}</p>
+              <p className="text-xs text-muted-foreground">{user.usuario}</p>
             </div>
             <Button variant="ghost" size="sm" onClick={handleLogout} className="text-red-500">
               <LogOut size={18} />
@@ -145,50 +145,50 @@ export default function Performance() {
       <div className="max-w-7xl mx-auto px-4 py-10">
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-          <Card className="p-6 shadow-sm border-l-4 border-l-[#002b5c]">
+          <Card className="p-6 shadow-sm border-l-4 border-l-primary">
             <div className="flex items-center justify-between mb-4">
-              <p className="text-sm font-bold text-gray-500 uppercase tracking-wider">Total</p>
-              <div className="p-2 bg-[#002b5c]/10 rounded-lg text-[#002b5c]">
+              <p className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Total</p>
+              <div className="p-2 bg-primary/10 rounded-lg text-primary">
                 <BookOpen className="w-5 h-5" />
               </div>
             </div>
-            <p className="text-4xl font-black text-[#002b5c]">{stats.totalQuestions}</p>
-            <p className="text-xs text-gray-400 mt-2">Questões respondidas</p>
+            <p className="text-4xl font-black text-primary">{stats.totalQuestions}</p>
+            <p className="text-xs text-muted-foreground mt-2">Questões respondidas</p>
           </Card>
 
-          <Card className="p-6 shadow-sm border-l-4 border-l-green-500">
+          <Card className="p-6 shadow-sm border-l-4 border-l-success">
             <div className="flex items-center justify-between mb-4">
-              <p className="text-sm font-bold text-gray-500 uppercase tracking-wider">Acertos</p>
-              <div className="p-2 bg-green-100 rounded-lg text-green-600">
+              <p className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Acertos</p>
+              <div className="p-2 bg-success/10 rounded-lg text-success">
                 <Target className="w-5 h-5" />
               </div>
             </div>
-            <p className="text-4xl font-black text-green-600">{stats.correctAnswers}</p>
-            <p className="text-xs text-gray-400 mt-2">Respostas corretas</p>
+            <p className="text-4xl font-black text-success">{stats.correctAnswers}</p>
+            <p className="text-xs text-muted-foreground mt-2">Respostas corretas</p>
           </Card>
 
-          <Card className="p-6 shadow-sm border-l-4 border-l-red-500">
+          <Card className="p-6 shadow-sm border-l-4 border-l-destructive">
             <div className="flex items-center justify-between mb-4">
-              <p className="text-sm font-bold text-gray-500 uppercase tracking-wider">Erros</p>
-              <div className="p-2 bg-red-100 rounded-lg text-red-600">
+              <p className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Erros</p>
+              <div className="p-2 bg-destructive/10 rounded-lg text-destructive">
                 <TrendingUp className="w-5 h-5" />
               </div>
             </div>
-            <p className="text-4xl font-black text-red-600">{stats.incorrectAnswers}</p>
-            <p className="text-xs text-gray-400 mt-2">Respostas incorretas</p>
+            <p className="text-4xl font-black text-destructive">{stats.incorrectAnswers}</p>
+            <p className="text-xs text-muted-foreground mt-2">Respostas incorretas</p>
           </Card>
 
-          <Card className="p-6 shadow-sm border-l-4 border-l-[#d4af37]">
+          <Card className="p-6 shadow-sm border-l-4 border-l-accent">
             <div className="flex items-center justify-between mb-4">
-              <p className="text-sm font-bold text-gray-500 uppercase tracking-wider">Aproveitamento</p>
-              <div className="p-2 bg-[#d4af37]/10 rounded-lg text-[#d4af37]">
+              <p className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Aproveitamento</p>
+              <div className="p-2 bg-accent/10 rounded-lg text-accent">
                 <Award className="w-5 h-5" />
               </div>
             </div>
-            <p className="text-4xl font-black text-[#d4af37]">{stats.accuracy.toFixed(1)}%</p>
-            <div className="mt-4 h-2 bg-gray-100 rounded-full overflow-hidden">
+            <p className="text-4xl font-black text-accent">{stats.accuracy.toFixed(1)}%</p>
+            <div className="mt-4 h-2 bg-muted rounded-full overflow-hidden">
               <div
-                className="h-full bg-[#d4af37] transition-all duration-1000"
+                className="h-full bg-accent transition-all duration-1000"
                 style={{ width: `${stats.accuracy}%` }}
               />
             </div>
@@ -199,22 +199,22 @@ export default function Performance() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
           {/* Desempenho por Especialidade */}
           <Card className="p-8 shadow-md">
-            <h2 className="text-xl font-bold text-[#002b5c] mb-8 flex items-center gap-2">
-              <Stethoscope className="w-6 h-6 text-[#d4af37]" /> Desempenho por Especialidade
+            <h2 className="text-xl font-bold text-primary mb-8 flex items-center gap-2">
+              <Stethoscope className="w-6 h-6 text-accent" /> Desempenho por Especialidade
             </h2>
             {stats.bySpecialty.length > 0 ? (
               <ResponsiveContainer width="100%" height={350}>
                 <BarChart data={stats.bySpecialty} layout="vertical" margin={{ left: 40 }}>
                   <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#f1f5f9" />
                   <XAxis type="number" domain={[0, 100]} hide />
-                  <YAxis dataKey="specialty" type="category" width={100} tick={{ fontSize: 12, fontWeight: 600, fill: '#64748b' }} />
+                  <YAxis dataKey="specialty" type="category" width={100} tick={{ fontSize: 12, fontWeight: 600, fill: 'currentColor' }} />
                   <Tooltip 
-                    cursor={{ fill: '#f8fafc' }}
-                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                    cursor={{ fill: 'var(--muted)', opacity: 0.1 }}
+                    contentStyle={{ backgroundColor: 'var(--card)', color: 'var(--card-foreground)', borderRadius: '12px', border: '1px solid var(--border)', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
                   />
                   <Bar dataKey="accuracy" radius={[0, 4, 4, 0]} barSize={20}>
                     {stats.bySpecialty.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={index % 2 === 0 ? '#002b5c' : '#d4af37'} />
+                      <Cell key={`cell-${index}`} fill={index % 2 === 0 ? 'var(--primary)' : 'var(--accent)'} />
                     ))}
                   </Bar>
                 </BarChart>
@@ -228,10 +228,10 @@ export default function Performance() {
 
           {/* Tendência e Melhora */}
           <div className="space-y-8">
-            <Card className="p-8 shadow-md bg-[#002b5c] text-white overflow-hidden relative">
+            <Card className="p-8 shadow-md bg-primary text-primary-foreground overflow-hidden relative">
               <div className="absolute -right-10 -bottom-10 w-40 h-40 bg-white/5 rounded-full"></div>
               <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
-                <TrendingUp className="w-6 h-6 text-[#d4af37]" /> Tendência Recente
+                <TrendingUp className="w-6 h-6 text-accent" /> Tendência Recente
               </h2>
               <div className="grid grid-cols-2 gap-6">
                 <div className="space-y-1">
@@ -252,12 +252,12 @@ export default function Performance() {
             </Card>
 
             <Card className="p-8 shadow-md">
-              <h2 className="text-xl font-bold text-[#002b5c] mb-6">Top Bancas</h2>
+              <h2 className="text-xl font-bold text-primary mb-6">Top Bancas</h2>
               <div className="space-y-4">
                 {stats.bySource.slice(0, 4).map((source, idx) => (
-                  <div key={idx} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                  <div key={idx} className="flex items-center justify-between p-4 bg-muted/50 rounded-xl">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center text-xs font-bold text-[#002b5c] shadow-sm">
+                      <div className="w-8 h-8 bg-card rounded-lg flex items-center justify-center text-xs font-bold text-primary shadow-sm">
                         {idx + 1}
                       </div>
                       <span className="font-bold text-gray-700">{source.source}</span>
