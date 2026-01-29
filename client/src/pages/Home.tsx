@@ -192,7 +192,7 @@ export default function Home() {
       const token = localStorage.getItem("medquestoes_token");
       if (!token) return;
       const tempoResposta = Math.max(1, Math.floor((Date.now() - questionStartTime) / 1000));
-      console.log("Salvando resposta:", { questionId, selectedAnswer, isCorrect, tempoResposta, tema });
+
 await axios.post("/api/user-answers", {
 	        questionId: parseInt(questionId), selectedAnswer, isCorrect, tempoResposta, tema, highlights
 	      }, {
