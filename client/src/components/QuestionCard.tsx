@@ -206,7 +206,7 @@ const res = await axios.post("/api/resolutions/generate", {
         <div 
           ref={questionRef}
           id={`question-content-${question.id}`}
-          className="text-gray-800 dark:text-slate-200 leading-relaxed text-xl font-medium select-text pointer-events-auto"
+          className="text-gray-800 dark:text-slate-50 leading-relaxed text-xl font-bold select-text pointer-events-auto"
           style={{ userSelect: 'text', WebkitUserSelect: 'text' }}
           dangerouslySetInnerHTML={{ 
             __html: currentHighlights || question.question.replace(/\n/g, '<br/>') 
@@ -232,21 +232,21 @@ const res = await axios.post("/api/resolutions/generate", {
                 ${
                   isSelected
                     ? showCorrect
-                      ? "border-green-500 bg-green-50 dark:bg-green-900/10"
+                      ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-500/10"
                       : showIncorrect
-                        ? "border-red-500 bg-red-50 dark:bg-red-900/10"
-                        : "border-[#002b5c] dark:border-blue-500 bg-[#002b5c]/5 dark:bg-blue-500/5 shadow-lg shadow-blue-900/5"
+                        ? "border-rose-500 bg-rose-50 dark:bg-rose-500/10"
+                        : "border-[#002b5c] dark:border-blue-400 bg-[#002b5c]/5 dark:bg-blue-400/10 shadow-lg shadow-blue-900/20"
                     : showCorrect
-                      ? "border-green-500 bg-green-50 dark:bg-green-900/10"
-                      : "border-gray-100 dark:border-slate-800 hover:border-blue-200 dark:hover:border-blue-800 hover:bg-blue-50/30 dark:hover:bg-blue-900/5"
+                      ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-500/10"
+                      : "border-gray-100 dark:border-slate-800 hover:border-blue-300 dark:hover:border-blue-500 hover:bg-blue-50/30 dark:hover:bg-blue-500/5"
                 }
               `}
             >
               <span className={`
                 font-black w-10 h-10 flex items-center justify-center rounded-xl flex-shrink-0 transition-all duration-300
                 ${isSelected 
-                  ? "bg-[#002b5c] dark:bg-blue-600 text-white scale-110 shadow-lg shadow-blue-900/20" 
-                  : "bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30 group-hover:text-blue-600"
+                  ? "bg-[#002b5c] dark:bg-blue-500 text-white scale-110 shadow-lg shadow-blue-400/20" 
+                  : "bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-300 group-hover:bg-blue-100 dark:group-hover:bg-blue-500/20 group-hover:text-blue-600 dark:group-hover:text-blue-400"
                 }
               `}>
                 {alt.letter}
@@ -256,7 +256,7 @@ const res = await axios.post("/api/resolutions/generate", {
                   remarkPlugins={[remarkGfm]}
                   components={{
                     p: ({ children }) => (
-                      <span className={`text-base font-semibold transition-colors duration-300 ${isSelected ? "text-[#002b5c] dark:text-blue-300" : "text-gray-600 dark:text-slate-400 group-hover:text-gray-900 dark:group-hover:text-slate-200"}`}>
+                      <span className={`text-base font-bold transition-colors duration-300 ${isSelected ? "text-[#002b5c] dark:text-blue-100" : "text-gray-600 dark:text-slate-300 group-hover:text-gray-900 dark:group-hover:text-slate-50"}`}>
                         {children}
                       </span>
                     ),
