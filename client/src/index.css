@@ -130,9 +130,9 @@
 }
 
 .dark .prose {
-  --tw-prose-body: #dbeafe;
-  --tw-prose-headings: #eff6ff;
-  --tw-prose-bold: #ffffff;
+  --tw-prose-body: #020617;
+  --tw-prose-headings: #020617;
+  --tw-prose-bold: #020617;
 }
 
 .custom-scrollbar::-webkit-scrollbar {
