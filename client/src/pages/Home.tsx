@@ -68,7 +68,32 @@ export default function Home() {
   useEffect(() => {
     fetchFilters();
     updateQuestionCount(filters);
+    
+    // Verificar se há uma questão específica na URL para revisar
+    const params = new URLSearchParams(window.location.search);
+    const questionId = params.get("question");
+    if (questionId) {
+      handleReviewQuestion(questionId);
+    }
   }, []);
+
+  const handleReviewQuestion = async (id: string) => {
+    setLoading(true);
+    try {
+      const response = await axios.get(`/api/questions/${id}`);
+      const questionData = response.data;
+      if (questionData) {
+        setQuestions([questionData]);
+        setCurrentIndex(0);
+        setQuestionStatuses([{ answered: false, marked: false }]);
+        setPageState("quiz");
+      }
+    } catch (error) {
+      console.error("Erro ao carregar questão para revisão:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchFilters = async () => {
     try {

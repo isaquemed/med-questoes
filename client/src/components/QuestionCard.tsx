@@ -167,9 +167,9 @@ const res = await axios.post("/api/resolutions/generate", {
   };
 
   return (
-    <Card className="emed-card p-8 space-y-8 border-none shadow-xl bg-white dark:bg-slate-900 rounded-[2rem] overflow-hidden">
+    <Card className="emed-card p-8 space-y-8 border-none shadow-xl bg-white dark:bg-slate-900/40 backdrop-blur-sm rounded-[2rem] overflow-hidden">
       {/* Header Refinado */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-100 dark:border-slate-800 pb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-100 dark:border-slate-800/50 pb-6">
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-2">
             <span className="px-3 py-1 bg-[#c5a059]/10 text-[#c5a059] rounded-full text-[10px] font-black uppercase tracking-widest">
@@ -206,10 +206,10 @@ const res = await axios.post("/api/resolutions/generate", {
         <div 
           ref={questionRef}
           id={`question-content-${question.id}`}
-          className="text-gray-800 dark:text-slate-50 leading-relaxed text-xl font-bold select-text pointer-events-auto"
+          className="text-gray-800 dark:text-slate-50 leading-relaxed text-xl font-bold select-text pointer-events-auto bg-transparent"
           style={{ userSelect: 'text', WebkitUserSelect: 'text' }}
           dangerouslySetInnerHTML={{ 
-            __html: currentHighlights || question.question.replace(/\n/g, '<br/>') 
+            __html: (currentHighlights || question.question.replace(/\n/g, '<br/>')).replace(/background-color: rgb\(255, 255, 0\)/g, 'background-color: rgba(255, 255, 0, 0.85); color: #000; font-weight: 900; border-radius: 4px;') 
           }}
         />
       </div>

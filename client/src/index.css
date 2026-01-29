@@ -88,21 +88,21 @@
 }
 
 .dark {
-  --primary: #60a5fa; /* Azul mais claro para melhor contraste no escuro */
+  --primary: #60a5fa;
   --primary-foreground: #0f172a;
   --sidebar-primary: #3b82f6;
   --sidebar-primary-foreground: #f0fdfa;
-  --background: #020617; /* Fundo mais profundo (slate-950) */
-  --foreground: #f1f5f9; /* Texto claro suave (slate-100) */
-  --card: #0f172a; /* Cards um pouco mais claros que o fundo (slate-900) */
+  --background: #020617;
+  --foreground: #f1f5f9;
+  --card: #0f172a;
   --card-foreground: #f1f5f9;
   --popover: #0f172a;
   --popover-foreground: #f1f5f9;
-  --secondary: #1e293b; /* slate-800 */
+  --secondary: #1e293b;
   --secondary-foreground: #e2e8f0;
   --muted: #1e293b;
-  --muted-foreground: #94a3b8; /* slate-400 */
-  --accent: #f59e0b; /* Dourado/Amarelo mais vibrante no escuro */
+  --muted-foreground: #94a3b8;
+  --accent: #f59e0b;
   --accent-foreground: #020617;
   --destructive: #ef4444;
   --destructive-foreground: #ffffff;
@@ -120,6 +120,20 @@
   --sidebar-accent-foreground: #f1f5f9;
   --sidebar-border: #1e293b;
   --sidebar-ring: #3b82f6;
+}
+
+.dark .highlighted {
+  background-color: rgba(255, 223, 0, 0.9) !important;
+  color: #000 !important;
+  font-weight: 900 !important;
+  border-radius: 4px !important;
+  box-shadow: 0 0 10px rgba(255, 223, 0, 0.2);
+}
+
+.dark .prose {
+  --tw-prose-body: #f1f5f9;
+  --tw-prose-headings: #ffffff;
+  --tw-prose-bold: #ffffff;
 }
 
 .custom-scrollbar::-webkit-scrollbar {
