@@ -120,3 +120,49 @@ router.get('/', async (req: any, res: any) => {
 });
 
 export default router;
+
+// Rota para buscar uma questão específica por ID (usada na revisão)
+router.get('/:id', async (req: any, res: any) => {
+  try {
+    const { id } = req.params;
+    
+    // 1. Buscar a questão
+    const [questions]: [any[], any] = await pool.query(
+      'SELECT * FROM questions WHERE id = ?',
+      [id]
+    );
+
+    if (!questions || questions.length === 0) {
+      return res.status(404).json({ error: 'Questão não encontrada' });
+    }
+
+    const question = questions[0];
+
+    // 2. Buscar alternativas
+    const [alternatives]: [any[], any] = await pool.query(
+      'SELECT * FROM alternatives WHERE question_id = ? ORDER BY letter',
+      [id]
+    );
+
+    // 3. Montar objeto final
+    const questionWithAlternatives = {
+      id: question.id,
+      question: question.question,
+      source: question.source,
+      specialty: question.specialty,
+      topic: question.topic,
+      year: question.year,
+      correctAnswer: question.correct_answer || question.correctAnswer,
+      resolution: question.resolution,
+      alternatives: alternatives.map((alt: any) => ({
+        letter: alt.letter,
+        text: alt.text
+      }))
+    };
+
+    res.json(questionWithAlternatives);
+  } catch (error: any) {
+    console.error('ERRO NA ROTA /api/questions/:id:', error);
+    res.status(500).json({ error: 'Erro ao buscar questão', details: error.message });
+  }
+});

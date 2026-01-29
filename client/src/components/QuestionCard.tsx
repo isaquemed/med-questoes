@@ -216,7 +216,7 @@ const res = await axios.post("/api/resolutions/generate", {
 
       {/* Alternatives com Design Moderno */}
       <div className="space-y-4">
-        {question.alternatives.map((alt) => {
+        {(question?.alternatives || []).map((alt) => {
           const isSelected = selectedAnswer === alt.letter;
           const isAnswerCorrect = alt.letter === question.correctAnswer;
           const showCorrect = showResult && isAnswerCorrect;
