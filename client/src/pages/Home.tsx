@@ -48,7 +48,12 @@ export default function Home() {
   
   const initialFilters = { source: "all", year: "all", specialty: "all", topic: "all", limit: "10" };
   const [filters, setFilters] = useState(initialFilters);
-  const [availableFilters, setAvailableFilters] = useState({ sources: [], years: [], specialties: [], topics: [] });
+  const [availableFilters, setAvailableFilters] = useState<{
+    sources: string[];
+    years: (string | number)[];
+    specialties: string[];
+    topics: string[];
+  }>({ sources: [], years: [], specialties: [], topics: [] });
   const [totalQuestionsCount, setTotalQuestionsCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const [countLoading, setCountLoading] = useState(false);
@@ -318,11 +323,13 @@ await axios.post("/api/user-answers", {
                 <ListChecks className="w-4 h-4" /> Navegação
               </h3>
               <QuestionNavigation
-                total={questions.length}
-                current={currentIndex}
-                statuses={questionStatuses}
+                totalQuestions={questions.length}
+                currentIndex={currentIndex}
+                questionStatuses={questionStatuses}
                 onNavigate={handleNavigate}
                 onToggleMark={handleToggleMark}
+                onPrevious={handlePrevious}
+                onNext={handleNext}
               />
             </Card>
 
