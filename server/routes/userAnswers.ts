@@ -24,6 +24,7 @@ router.post("/", authenticateToken, async (req: any, res: any) => {
     const answeredAt = Math.floor(Date.now() / 1000);
 
     // Usar a tabela 'user_answers'
+    // Nota: Usando nomes de colunas consistentes com o schema (snake_case)
     await dbPool.query(
       `INSERT INTO user_answers (usuario_id, question_id, selected_answer, is_correct, answered_at, tempo_resposta, tema, highlights) 
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
