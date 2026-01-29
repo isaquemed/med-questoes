@@ -123,11 +123,10 @@
 }
 
 .dark .highlighted {
-  background-color: rgba(255, 223, 0, 0.9) !important;
+  background-color: rgba(255, 223, 0, 0.85) !important;
   color: #000 !important;
-  font-weight: 900 !important;
-  border-radius: 4px !important;
-  box-shadow: 0 0 10px rgba(255, 223, 0, 0.2);
+  font-weight: inherit !important;
+  border-radius: 2px !important;
 }
 
 .dark .prose {
@@ -231,6 +230,7 @@
   border-radius: 2px;
   padding: 2px 0;
   display: inline;
+  font-weight: inherit !important;
 }
 
 /* Botão de limpar grifos - usando suas variáveis */
