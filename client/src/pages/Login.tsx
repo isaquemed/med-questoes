@@ -136,7 +136,7 @@ export default function Login() {
               <div className="space-y-2">
                 <label className="text-xs font-bold text-gray-500 uppercase">Usuário</label>
                 <input
-                  className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#002b5c] transition-all"
+                  className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#002b5c] transition-all text-[#020617] font-medium"
                   type="text"
                   name="usuario"
                   placeholder="Seu nome de usuário"
@@ -147,7 +147,7 @@ export default function Login() {
               <div className="space-y-2">
                 <label className="text-xs font-bold text-gray-500 uppercase">Senha</label>
                 <input
-                  className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#002b5c] transition-all"
+                  className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#002b5c] transition-all text-[#020617] font-medium"
                   type="password"
                   name="password"
                   placeholder="••••••••"
@@ -168,7 +168,7 @@ export default function Login() {
               <div className="space-y-2">
                 <label className="text-xs font-bold text-gray-500 uppercase">Nome Completo</label>
                 <input
-                  className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#002b5c] transition-all"
+                  className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#002b5c] transition-all text-[#020617] font-medium"
                   type="text"
                   name="name"
                   placeholder="Como quer ser chamado?"
@@ -179,7 +179,7 @@ export default function Login() {
               <div className="space-y-2">
                 <label className="text-xs font-bold text-gray-500 uppercase">Usuário</label>
                 <input
-                  className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#002b5c] transition-all"
+                  className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#002b5c] transition-all text-[#020617] font-medium"
                   type="text"
                   name="usuario"
                   placeholder="Escolha um nome de usuário"
@@ -190,7 +190,7 @@ export default function Login() {
               <div className="space-y-2">
                 <label className="text-xs font-bold text-gray-500 uppercase">Senha</label>
                 <input
-                  className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#002b5c] transition-all"
+                  className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#002b5c] transition-all text-[#020617] font-medium"
                   type="password"
                   name="password"
                   placeholder="Mínimo 6 caracteres"
@@ -202,7 +202,7 @@ export default function Login() {
               <div className="space-y-2">
                 <label className="text-xs font-bold text-gray-500 uppercase">Confirmar Senha</label>
                 <input
-                  className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#002b5c] transition-all"
+                  className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#002b5c] transition-all text-[#020617] font-medium"
                   type="password"
                   name="confirmPassword"
                   placeholder="Repita sua senha"
